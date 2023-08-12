@@ -1,0 +1,15 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Project Discussion
+    url: https://github.com/pointfreeco/swift-macro-testing/discussions
+    about: Library Q&A, ideas, and more
+  - name: Documentation
+    url: https://swiftpackageindex.com/pointfreeco/swift-macro-testing/main/documentation
+    about: Read the documentation
+  - name: Videos
+    url: https://www.pointfree.co/episodes/ep250-testing-debugging-macros-part-1
+    about: Watch videos to get a behind-the-scenes look at how this library was motivated and built
+  - name: Slack
+    url: https://www.pointfree.co/slack-invite
+    about: Community chat
