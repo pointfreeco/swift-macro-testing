@@ -32,7 +32,7 @@ import XCTest
 ///     """
 ///     #stringify(a + b)
 ///     """
-///   } matches: {
+///   } expansion: {
 ///     """
 ///     (a + b, "a + b")
 ///     """
@@ -51,7 +51,7 @@ import XCTest
 ///     let boolean: Bool
 ///   }
 ///   """
-/// } matches: {
+/// } diagnostics: {
 ///   """
 ///   @MetaEnum struct Cell {
 ///   ┬────────
@@ -80,7 +80,7 @@ import XCTest
 /// >     """
 /// >     #stringify(a + b)
 /// >     """
-/// >   } matches: {
+/// >   } expansion: {
 /// >     """
 /// >     (a + b, "a + b")
 /// >     """
@@ -91,12 +91,12 @@ import XCTest
 /// - Parameters:
 ///   - macros: The macros to expand in the original source string. Required, either implicitly via
 ///     ``withMacroTesting(isRecording:macros:operation:)-2vypn``, or explicitly via this parameter.
-///   - applyFixIts: Applies fix-its to the original source and snapshots the result. If there are
 ///     no fix-its to apply, or if any diagnostics are unfixable, the assertion will fail.
 ///   - isRecording: Always records new snapshots when enabled.
 ///   - originalSource: A string of Swift source code.
-///   - expandedOrDiagnosedSource: The expected Swift source string with macros or diagnostics
-///     expanded.
+///   - diagnosedSource: Swift source code annotated with expected diagnostics.
+///   - fixedSource: Swift source code with expected fix-its applied.
+///   - expandedSource: Expected Swift source string with macros expanded.
 ///   - file: The file where the assertion occurs. The default is the filename of the test case
 ///     where you call this function.
 ///   - function: The function where the assertion occurs. The default is the name of the test
@@ -107,10 +107,11 @@ import XCTest
 ///     function.
 public func assertMacro(
   _ macros: [String: Macro.Type]? = nil,
-  applyFixIts: Bool = false,
   record isRecording: Bool? = nil,
   of originalSource: () throws -> String,
-  matches expandedOrDiagnosedSource: (() -> String)? = nil,
+  diagnostics diagnosedSource: (() -> String)? = nil,
+  fixes fixedSource: (() -> String)? = nil,
+  expansion expandedSource: (() -> String)? = nil,
   file: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
@@ -145,39 +146,210 @@ public func assertMacro(
   SnapshotTesting.isRecording = isRecording ?? MacroTestingConfiguration.current.isRecording
   defer { SnapshotTesting.isRecording = wasRecording }
 
-  assertInlineSnapshot(
-    of: try originalSource(),
-    as: .macroExpansion(macros, applyFixIts: applyFixIts, file: file, line: line),
-    message: """
-      Actual output (\(actualPrefix)) differed from expected output (\(expectedPrefix)). \
-      Difference: …
-      """,
-    syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
-      trailingClosureLabel: "matches",
-      trailingClosureOffset: 1
-    ),
-    matches: expandedOrDiagnosedSource,
-    file: file,
-    function: function,
-    line: line,
-    column: column
-  )
+  do {
+    var origSourceFile = Parser.parse(source: try originalSource())
+    if let foldedSourceFile = try OperatorTable.standardOperators.foldAll(origSourceFile).as(
+      SourceFileSyntax.self
+    ) {
+      origSourceFile = foldedSourceFile
+    }
+
+    let origDiagnostics = ParseDiagnosticsGenerator.diagnostics(for: origSourceFile)
+    let indentationWidth = Trivia(
+      stringLiteral: String(
+        SourceLocationConverter(fileName: "-", tree: origSourceFile).sourceLines
+          .first(where: { $0.first?.isWhitespace == true && $0 != "\n" })?
+          .prefix(while: { $0.isWhitespace })
+          ?? "    "
+      )
+    )
+
+    var context = BasicMacroExpansionContext(
+      sourceFiles: [
+        origSourceFile: .init(moduleName: "TestModule", fullFilePath: "Test.swift")
+      ]
+    )
+    var expandedSourceFile = origSourceFile.expand(
+      macros: macros,
+      in: context,
+      indentationWidth: indentationWidth
+    )
+
+    var offset = 0
+
+    func anchor(_ diag: Diagnostic) -> Diagnostic {
+      let location = context.location(for: diag.position, anchoredAt: diag.node, fileName: "")
+      return Diagnostic(
+        node: diag.node,
+        position: AbsolutePosition(utf8Offset: location.offset),
+        message: diag.diagMessage,
+        highlights: diag.highlights,
+        notes: diag.notes,
+        fixIts: diag.fixIts
+      )
+    }
+
+    var allDiagnostics: [Diagnostic] { origDiagnostics + context.diagnostics }
+    if !allDiagnostics.isEmpty || diagnosedSource != nil {
+      offset += 1
+
+      let converter = SourceLocationConverter(fileName: "-", tree: origSourceFile)
+      let lineCount = converter.location(for: origSourceFile.endPosition).line
+      let diagnostics =
+        DiagnosticsFormatter
+        .annotatedSource(
+          tree: origSourceFile,
+          diags: allDiagnostics.map(anchor),
+          context: context,
+          contextSize: lineCount
+        )
+        .description
+        .replacingOccurrences(of: #"(^|\n) *\d* +│ "#, with: "$1", options: .regularExpression)
+        .trimmingCharacters(in: .newlines)
+
+      assertInlineSnapshot(
+        of: diagnostics,
+        as: ._lines,
+        message: """
+          Diagnostic output (\(actualPrefix)) differed from expected output (\(expectedPrefix)). \
+          Difference: …
+          """,
+        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+          deprecatedTrailingClosureLabels: ["matches"],
+          trailingClosureLabel: "diagnostics",
+          trailingClosureOffset: offset
+        ),
+        matches: diagnosedSource,
+        file: file,
+        function: function,
+        line: line,
+        column: column
+      )
+    } else if diagnosedSource != nil {
+      offset += 1
+      InlineSnapshotSyntaxDescriptor(
+        trailingClosureLabel: "diagnostics",
+        trailingClosureOffset: offset
+      )
+      .fail(
+        "Expected diagnostics, but there were none",
+        file: file,
+        line: line,
+        column: column
+      )
+    }
+
+    if !allDiagnostics.isEmpty && allDiagnostics.allSatisfy({ !$0.fixIts.isEmpty }) {
+      offset += 1
+
+      var fixedSourceFile = origSourceFile
+      fixedSourceFile = Parser.parse(
+        source: FixItApplier.applyFixes(
+          context: context, in: allDiagnostics.map(anchor), to: origSourceFile
+        )
+        .description
+      )
+      if let foldedSourceFile = try OperatorTable.standardOperators.foldAll(fixedSourceFile).as(
+        SourceFileSyntax.self
+      ) {
+        fixedSourceFile = foldedSourceFile
+      }
+
+      assertInlineSnapshot(
+        of: fixedSourceFile.description.trimmingCharacters(in: .newlines),
+        as: ._lines,
+        message: """
+          Fixed output (\(actualPrefix)) differed from expected output (\(expectedPrefix)). \
+          Difference: …
+          """,
+        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+          trailingClosureLabel: "fixes",
+          trailingClosureOffset: offset
+        ),
+        matches: fixedSource,
+        file: file,
+        function: function,
+        line: line,
+        column: column
+      )
+
+      context = BasicMacroExpansionContext(
+        sourceFiles: [
+          fixedSourceFile: .init(moduleName: "TestModule", fullFilePath: "Test.swift")
+        ]
+      )
+      expandedSourceFile = fixedSourceFile.expand(
+        macros: macros,
+        in: context,
+        indentationWidth: indentationWidth
+      )
+    } else if fixedSource != nil {
+      offset += 1
+      InlineSnapshotSyntaxDescriptor(
+        trailingClosureLabel: "fixes",
+        trailingClosureOffset: offset
+      )
+      .fail(
+        "Expected fix-its, but there were none",
+        file: file,
+        line: line,
+        column: column
+      )
+    }
+
+    if allDiagnostics.filter({ $0.diagMessage.severity == .error }).isEmpty
+      || expandedSource != nil
+    {
+      offset += 1
+      assertInlineSnapshot(
+        of: expandedSourceFile.description.trimmingCharacters(in: .newlines),
+        as: ._lines,
+        message: """
+          Expanded output (\(actualPrefix)) differed from expected output (\(expectedPrefix)). \
+          Difference: …
+          """,
+        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+          deprecatedTrailingClosureLabels: ["matches"],
+          trailingClosureLabel: "expansion",
+          trailingClosureOffset: offset
+        ),
+        matches: expandedSource,
+        file: file,
+        function: function,
+        line: line,
+        column: column
+      )
+    } else if expandedSource != nil {
+      offset += 1
+      InlineSnapshotSyntaxDescriptor(
+        trailingClosureLabel: "expansion",
+        trailingClosureOffset: offset
+      )
+      .fail(
+        "Expected macro expansion, but there was none",
+        file: file,
+        line: line,
+        column: column
+      )
+    }
+  } catch {
+    XCTFail("Threw error: \(error)", file: file, line: line)
+  }
 }
 
 /// Asserts that a given Swift source string matches an expected string with all macros expanded.
 ///
-/// See ``assertMacro(_:applyFixIts:record:of:matches:file:function:line:column:)-3rrmp`` for more
-/// details.
+/// See ``assertMacro(_:record:of:diagnostics:fixes:expansion:file:function:line:column:)-6hxgm`` for
+/// more details.
 ///
 /// - Parameters:
 ///   - macros: The macros to expand in the original source string. Required, either implicitly via
 ///     ``withMacroTesting(isRecording:macros:operation:)-2vypn``, or explicitly via this parameter.
-///   - applyFixIts: Applies fix-its to the original source and snapshots the result. If there are
-///     no fix-its to apply, or if any diagnostics are unfixable, the assertion will fail.
 ///   - isRecording: Always records new snapshots when enabled.
 ///   - originalSource: A string of Swift source code.
-///   - expandedOrDiagnosedSource: The expected Swift source string with macros or diagnostics
-///     expanded.
+///   - diagnosedSource: Swift source code annotated with expected diagnostics.
+///   - fixedSource: Swift source code with expected fix-its applied.
+///   - expandedSource: Expected Swift source string with macros expanded.
 ///   - file: The file where the assertion occurs. The default is the filename of the test case
 ///     where you call this function.
 ///   - function: The function where the assertion occurs. The default is the name of the test
@@ -188,10 +360,11 @@ public func assertMacro(
 ///     function.
 public func assertMacro(
   _ macros: [Macro.Type],
-  applyFixIts: Bool = false,
   record isRecording: Bool? = nil,
   of originalSource: () throws -> String,
-  matches expandedOrDiagnosedSource: (() -> String)? = nil,
+  diagnostics diagnosedSource: (() -> String)? = nil,
+  fixes fixedSource: (() -> String)? = nil,
+  expansion expandedSource: (() -> String)? = nil,
   file: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
@@ -199,10 +372,11 @@ public func assertMacro(
 ) {
   assertMacro(
     Dictionary(macros: macros),
-    applyFixIts: applyFixIts,
     record: isRecording,
     of: originalSource,
-    matches: expandedOrDiagnosedSource,
+    diagnostics: diagnosedSource,
+    fixes: fixedSource,
+    expansion: expandedSource,
     file: file,
     function: function,
     line: line,
@@ -373,94 +547,6 @@ extension Snapshotting where Value == String, Format == String {
   )
 }
 
-extension Snapshotting where Value == String, Format == String {
-  fileprivate static func macroExpansion(
-    _ macros: [String: Macro.Type],
-    applyFixIts: Bool,
-    testModuleName: String = "TestModule",
-    testFileName: String = "Test.swift",
-    indentationWidth: Trivia? = nil,
-    file: StaticString = #filePath,
-    line: UInt = #line
-  ) -> Self {
-    Snapshotting<String, String>._lines.pullback { input in
-      var origSourceFile = Parser.parse(source: input)
-      if let foldedSourceFile = try? OperatorTable.standardOperators.foldAll(origSourceFile).as(
-        SourceFileSyntax.self
-      ) {
-        origSourceFile = foldedSourceFile
-      }
-
-      let origDiagnostics = ParseDiagnosticsGenerator.diagnostics(for: origSourceFile)
-
-      let context = BasicMacroExpansionContext(
-        sourceFiles: [
-          origSourceFile: .init(moduleName: testModuleName, fullFilePath: testFileName)
-        ]
-      )
-      let indentationWidth =
-        indentationWidth
-        ?? Trivia(
-          stringLiteral: String(
-            SourceLocationConverter(fileName: "-", tree: origSourceFile).sourceLines
-              .first(where: { $0.first?.isWhitespace == true && $0 != "\n" })?
-              .prefix(while: { $0.isWhitespace })
-              ?? "    "
-          )
-        )
-      let expandedSourceFile = origSourceFile.expand(
-        macros: macros,
-        in: context,
-        indentationWidth: indentationWidth
-      )
-
-      guard
-        origDiagnostics.isEmpty,
-        context.diagnostics.isEmpty
-      else {
-        let allDiagnostics = origDiagnostics + context.diagnostics
-
-        func anchor(_ diag: Diagnostic) -> Diagnostic {
-          let location = context.location(for: diag.position, anchoredAt: diag.node, fileName: "")
-          return Diagnostic(
-            node: diag.node,
-            position: AbsolutePosition(utf8Offset: location.offset),
-            message: diag.diagMessage,
-            highlights: diag.highlights,
-            notes: diag.notes,
-            fixIts: diag.fixIts
-          )
-        }
-
-        let unfixableDiagnostics = allDiagnostics.filter { $0.fixIts.isEmpty }
-        if applyFixIts, unfixableDiagnostics.isEmpty {
-          let fixedSourceFile = FixItApplier.applyFixes(
-            context: context, in: allDiagnostics.map(anchor), to: origSourceFile
-          )
-          return diagnosticsOrTree(context: context, diags: [], tree: fixedSourceFile)
-        } else {
-          if applyFixIts {
-            XCTFail("Not all diagnostics are fixable.", file: file, line: line)
-          }
-          return diagnosticsOrTree(
-            context: context, diags: allDiagnostics.map(anchor), tree: origSourceFile
-          )
-        }
-      }
-
-      if applyFixIts {
-        XCTFail("No fix-its to apply.", file: file, line: line)
-      }
-
-      return diagnosticsOrTree(
-        context: context,
-        diags: ParseDiagnosticsGenerator.diagnostics(for: expandedSourceFile),
-        tree: expandedSourceFile
-      )
-    }
-  }
-}
-
 internal func macroName(className: String, isExpression: Bool) -> String {
   var name =
     className
@@ -475,25 +561,7 @@ internal func macroName(className: String, isExpression: Bool) -> String {
   return name
 }
 
-private func diagnosticsOrTree(
-  context: BasicMacroExpansionContext,
-  diags: [Diagnostic],
-  tree: some SyntaxProtocol
-) -> String {
-  guard !diags.isEmpty
-  else { return tree.description.trimmingCharacters(in: .newlines) }
-
-  let converter = SourceLocationConverter(fileName: "-", tree: tree)
-  let lineCount = converter.location(for: tree.endPosition).line
-  return
-    DiagnosticsFormatter
-    .annotatedSource(tree: tree, diags: diags, context: context, contextSize: lineCount)
-    .description
-    .replacingOccurrences(of: #"(^|\n) *\d* +│ "#, with: "$1", options: .regularExpression)
-    .trimmingCharacters(in: .newlines)
-}
-
-private struct MacroTestingConfiguration {
+struct MacroTestingConfiguration {
   @TaskLocal static var current = Self()
 
   var isRecording = false
@@ -501,7 +569,7 @@ private struct MacroTestingConfiguration {
 }
 
 extension Dictionary where Key == String, Value == Macro.Type {
-  fileprivate init(macros: [Macro.Type]) {
+  init(macros: [Macro.Type]) {
     self.init(
       macros.map {
         let name = macroName(

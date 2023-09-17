@@ -15,7 +15,7 @@ final class NewTypeMacroTests: BaseTestCase {
       public struct MyString {
       }
       """
-    } matches: {
+    } expansion: {
       """
       public struct MyString {
 

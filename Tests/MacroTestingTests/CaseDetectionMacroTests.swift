@@ -19,7 +19,7 @@ final class CaseDetectionMacroTests: BaseTestCase {
         case snake
       }
       """#
-    } matches: {
+    } expansion: {
       """
       enum Pet {
         case dog

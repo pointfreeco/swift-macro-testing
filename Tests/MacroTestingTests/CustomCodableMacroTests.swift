@@ -19,7 +19,7 @@ final class CustomCodableMacroTests: BaseTestCase {
         func randomFunction() {}
       }
       """
-    } matches: {
+    } expansion: {
       """
       struct CustomCodableString: Codable {
         var propertyWithOtherName: String

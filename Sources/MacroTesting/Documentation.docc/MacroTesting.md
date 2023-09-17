@@ -35,7 +35,7 @@ func testStringify() {
     """
     #stringify(a + b)
     """
-  } matches: {
+  } expansion: {
     """
     (a + b, "a + b")
     """
@@ -57,21 +57,20 @@ running the test again will produce a nicely formatted message:
 
 You can even have the library automatically re-record the macro expansion directly into your test
 file by providing the `record` argument to
-``assertMacro(_:applyFixIts:record:of:matches:file:function:line:column:)-3rrmp:
-
+``assertMacro(_:record:of:diagnostics:fixes:expansion:file:function:line:column:)-6hxgm``
 ```swift
 assertMacro(["stringify": StringifyMacro.self], record: true) {
   """
   #stringify(a + b)
   """
-} matches: {
+} expansion: {
   """
   (a + b, "a + b")
   """
 }
 ```
 
-Now when you run the test again the freshest expanded macro will be written to the `matches` 
+Now when you run the test again the freshest expanded macro will be written to the `expansion` 
 trailing closure.
 
 If you're writing many tests for a macro, you can avoid the repetitive work of specifying the macros
@@ -93,7 +92,7 @@ class StringifyMacroTests: XCTestCase {
       """
       #stringify(a + b)
       """
-    } matches: {
+    } expansion: {
       """
       (a + b, "a + b")
       """
@@ -121,25 +120,45 @@ override func invokeTest() {
 Macro Testing can also test diagnostics, such as warnings, errors, notes, and fix-its. When a macro
 expansion emits a diagnostic, it will render inline in the test. For example, a macro that adds
 completion handler functions to async functions may emit an error and fix-it when it is applied to a
-non-async function. The resulting macro test will fully capture this information:
+non-async function. The resulting macro test will fully capture this information, including where
+the diagnostics are emitted, how the fix-its are applied, and how the final macro expands:
 
 ```swift
 func testNonAsyncFunctionDiagnostic() {
   assertMacro {
     """
     @AddCompletionHandler
-    func f(a: Int, for b: String, _ value: Double) -> String {
+    func f(a: Int, for b: String) -> String {
       return b
     }
     """
-  } matches: {
+  } diagnostics: {
     """
     @AddCompletionHandler
-    func f(a: Int, for b: String, _ value: Double) -> String {
+    func f(a: Int, for b: String) -> String {
     ┬───
     ╰─ 🛑 can only add a completion-handler variant to an 'async' function
        ✏️ add 'async'
       return b
+    }
+    """
+  } fixes: {
+    """
+    @AddCompletionHandler
+    func f(a: Int, for b: String) async -> String {
+      return b
+    }
+    """
+  } expansion: {
+    """
+    func f(a: Int, for b: String) async -> String {
+      return b
+    }
+
+    func f(a: Int, for b: String, completionHandler: @escaping (String) -> Void) {
+      Task {
+        completionHandler(await f(a: a, for: b, value))
+      }
     }
     """
   }
@@ -150,5 +169,5 @@ func testNonAsyncFunctionDiagnostic() {
 
 ### Essentials
 
-- ``assertMacro(_:applyFixIts:record:of:matches:file:function:line:column:)-3rrmp``
+- ``assertMacro(_:record:of:diagnostics:fixes:expansion:file:function:line:column:)-6hxgm``
 - ``withMacroTesting(isRecording:macros:operation:)-2vypn``

@@ -17,7 +17,7 @@ final class DictionaryStorageMacroTests: BaseTestCase {
         var y: Int = 2
       }
       """
-    } matches: {
+    } expansion: {
       """
       struct Point {
         var x: Int = 1 {
