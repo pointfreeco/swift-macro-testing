@@ -146,53 +146,6 @@ func testNonAsyncFunctionDiagnostic() {
 }
 ```
 
-If in the future the macro's output changes, such as adding labels to the tuple's arguments, then
-running the test again will produce a nicely formatted message:
-
-> ❌ failed - Actual output (+) differed from expected output (−). Difference: …
-> 
-> ```diff
-> - (a + b, "a + b")
-> + (result: a + b, code: "a + b")
-> ```
-
-You can even have the library automatically re-record the macro expansion directly into your test
-file by providing the `record` argument to `assertMacro`:
-
-```swift
-assertMacro(["stringify": StringifyMacro.self], record: true) {
-  """
-  #stringify(a + b)
-  """
-} matches: {
-  """
-  (a + b, "a + b")
-  """
-}
-```
-
-Now when you run the test again the freshest expanded macro will be written to the `matches` 
-trailing closure.
-
-You can also use the ``withMacroTesting(isRecording:macros:operation:)-2vypn`` method to tell an
-entire test case to re-record all of their macro expansions. You do this by overriding the 
-`invokeTest` method and wrapping it in `withMacroTesting`:
-
-```swift
-class MyMacroTests: XCTestCase {
-  override func invokeTest() {
-    withMacroTesting(isRecording: true) {
-      super.invokeTest()
-    }
-  }
-
-  // …
-}
-```
-
-This will cause every test in the class to re-record their macro expansions, giving you the fresh
-version of the macro automatically. 
-
 ## Topics
 
 ### Essentials
