@@ -7,7 +7,11 @@
 
 Magical testing tools for Swift macros.
 
-![](https://pointfreeco-blog.s3.amazonaws.com/posts/0114-macro-testing/macro-testing-full.gif)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://pointfreeco-blog.s3.amazonaws.com/posts/0114-macro-testing/macro-testing-full-dark.gif">
+  <source media="(prefers-color-scheme: light)" srcset="https://pointfreeco-blog.s3.amazonaws.com/posts/0114-macro-testing/macro-testing-full.gif">
+  <img alt="An animated demonstration of macro tests being inlined." src="https://pointfreeco-blog.s3.amazonaws.com/posts/0114-macro-testing/macro-testing-full.gif">
+</picture>
 
 ## Learn more
 
