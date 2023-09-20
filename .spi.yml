@@ -9,3 +9,4 @@ builder:
     - documentation_targets:
       # First item in the list is the "landing" (default) target
       - MacroTesting
+      swift_version: 5.9
