@@ -175,7 +175,7 @@ The latest documentation for this library is available [here][macro-testing-docs
 
 This library is released under the MIT license. See [LICENSE](LICENSE) for details.
 
-[macro-testing-docs]: http://pointfreeco.github.io/swift-macro-testing/main/documentation/macrotesting
+[macro-testing-docs]: https://swiftpackageindex.com/pointfreeco/swift-macro-testing/main/documentation/macrotesting
 [macro-testing-episodes]: https://www.pointfree.co/episodes/ep250-testing-debugging-macros-part-1
 [mbrandonw]: https://github.com/mbrandonw
 [point-free]: https://www.pointfree.co
