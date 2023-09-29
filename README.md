@@ -21,7 +21,7 @@ video series exploring the Swift programming language hosted by [Brandon William
 
 You can watch all of the episodes [here][macro-testing-episodes].
 
-<a href="https://www.pointfree.co/episodes/ep250-testing-debugging-macros-part-1">
+<a href="https://www.pointfree.co/collections/macros">
   <img alt="video poster image" src="https://d3rccdn33rt8ze.cloudfront.net/episodes/0250.jpeg" width="600">
 </a>
 
@@ -176,7 +176,7 @@ The latest documentation for this library is available [here][macro-testing-docs
 This library is released under the MIT license. See [LICENSE](LICENSE) for details.
 
 [macro-testing-docs]: https://swiftpackageindex.com/pointfreeco/swift-macro-testing/main/documentation/macrotesting
-[macro-testing-episodes]: https://www.pointfree.co/episodes/ep250-testing-debugging-macros-part-1
+[macro-testing-episodes]: https://www.pointfree.co/collections/macros
 [mbrandonw]: https://github.com/mbrandonw
 [point-free]: https://www.pointfree.co
 [stephencelis]: https://github.com/stephencelis
