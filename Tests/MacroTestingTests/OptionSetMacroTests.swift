@@ -24,7 +24,7 @@ final class OptionSetMacroTests: BaseTestCase {
         static let all: ShippingOptions = [.express, .priority, .standard]
       }
       """
-    } matches: {
+    } expansion: {
       """
       struct ShippingOptions {
         private enum Options: Int {

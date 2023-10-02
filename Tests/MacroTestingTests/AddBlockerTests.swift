@@ -9,15 +9,14 @@ final class AddBlockerTests: BaseTestCase {
   }
 
   func testAddBlocker() {
-    let source = """
+    assertMacro {
+      """
       let x = 1
       let y = 2
       let z = 3
       #addBlocker(x * y + z)
       """
-    assertMacro {
-      source
-    } matches: {
+    } diagnostics: {
       """
       let x = 1
       let y = 2
@@ -27,48 +26,40 @@ final class AddBlockerTests: BaseTestCase {
                         ╰─ ⚠️ blocked an add; did you mean to subtract?
                            ✏️ use '-'
       """
-    }
-    assertMacro(applyFixIts: true) {
-      source
-    } matches: {
+    } fixes: {
       """
       let x = 1
       let y = 2
       let z = 3
       #addBlocker(x * y - z)
       """
+    } expansion: {
+      """
+      let x = 1
+      let y = 2
+      let z = 3
+      x * y - z
+      """
     }
   }
 
   func testAddBlocker_Inline() {
-    let source = """
+    assertMacro {
+      """
       #addBlocker(1 * 2 + 3)
       """
-    assertMacro {
-      source
-    } matches: {
+    } diagnostics: {
       """
       #addBlocker(1 * 2 + 3)
                   ───── ┬ ─
                         ╰─ ⚠️ blocked an add; did you mean to subtract?
                            ✏️ use '-'
       """
-    }
-    assertMacro(applyFixIts: true) {
-      source
-    } matches: {
+    } fixes: {
       """
       #addBlocker(1 * 2 - 3)
       """
-    }
-  }
-
-  func testAddBlocker_Expanded() {
-    assertMacro {
-      """
-      #addBlocker(1 * 2 - 3)
-      """
-    } matches: {
+    } expansion: {
       """
       1 * 2 - 3
       """

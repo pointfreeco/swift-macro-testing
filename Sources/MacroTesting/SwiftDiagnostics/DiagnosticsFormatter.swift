@@ -314,6 +314,7 @@ struct DiagnosticsFormatter {
         }
 
         if let underlines = diags.underlineHighlights(
+          sourceString: annotatedLine.sourceString,
           lineNumber: lineNumber,
           column: column,
           context: context
@@ -370,7 +371,7 @@ struct DiagnosticsFormatter {
       let prefix = colorizeIfRequested("⚠️ ", annotation: color.withTrait(.bold))
 
       return prefix + colorizeIfRequested(message.message, annotation: color)
-    case .note:
+    default:
       let color = ANSIAnnotation(color: .default, trait: .bold)
       let prefix = colorizeIfRequested("ℹ️ ", annotation: color)
       return prefix + message.message

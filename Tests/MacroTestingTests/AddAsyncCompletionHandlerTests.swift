@@ -28,7 +28,7 @@ final class AddAsyncCompletionHandlerMacroTests: BaseTestCase {
         }
       }
       """#
-    } matches: {
+    } expansion: {
       #"""
       struct MyStruct {
         func f(a: Int, for b: String, _ value: Double) async -> String {
@@ -82,7 +82,7 @@ final class AddAsyncCompletionHandlerMacroTests: BaseTestCase {
       @AddCompletionHandler
       struct Foo {}
       """
-    } matches: {
+    } diagnostics: {
       """
       @AddCompletionHandler
       ┬────────────────────
@@ -93,15 +93,14 @@ final class AddAsyncCompletionHandlerMacroTests: BaseTestCase {
   }
 
   func testNonAsyncFunctionDiagnostic() {
-    let source = """
+    assertMacro {
+      """
       @AddCompletionHandler
       func f(a: Int, for b: String, _ value: Double) -> String {
         return b
       }
       """
-    assertMacro {
-      source
-    } matches: {
+    } diagnostics: {
       """
       @AddCompletionHandler
       func f(a: Int, for b: String, _ value: Double) -> String {
@@ -111,14 +110,23 @@ final class AddAsyncCompletionHandlerMacroTests: BaseTestCase {
         return b
       }
       """
-    }
-    assertMacro(applyFixIts: true) {
-      source
-    } matches: {
+    } fixes: {
       """
       @AddCompletionHandler
       func f(a: Int, for b: String, _ value: Double) async -> String {
         return b
+      }
+      """
+    } expansion: {
+      """
+      func f(a: Int, for b: String, _ value: Double) async -> String {
+        return b
+      }
+
+      func f(a: Int, for b: String, _ value: Double, completionHandler: @escaping (String) -> Void) {
+        Task {
+          completionHandler(await f(a: a, for: b, value))
+        }
       }
       """
     }

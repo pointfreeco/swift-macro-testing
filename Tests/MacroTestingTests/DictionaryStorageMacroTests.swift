@@ -17,7 +17,7 @@ final class DictionaryStorageMacroTests: BaseTestCase {
         var y: Int = 2
       }
       """
-    } matches: {
+    } expansion: {
       """
       struct Point {
         var x: Int = 1 {
@@ -38,6 +38,28 @@ final class DictionaryStorageMacroTests: BaseTestCase {
         }
 
         var _storage: [String: Any] = [:]
+      }
+      """
+    }
+  }
+
+  func testExpansionWithoutInitializersEmitsError() {
+    assertMacro {
+      """
+      @DictionaryStorage
+      class Point {
+        let x: Int
+        let y: Int
+      }
+      """
+    } diagnostics: {
+      """
+      @DictionaryStorage
+      class Point {
+        let x: Int
+        ╰─ 🛑 stored property must have an initializer
+        let y: Int
+        ╰─ 🛑 stored property must have an initializer
       }
       """
     }

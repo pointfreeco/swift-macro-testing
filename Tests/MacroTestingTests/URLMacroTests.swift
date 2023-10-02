@@ -13,7 +13,7 @@ final class URLMacroTests: BaseTestCase {
       #"""
       print(#URL("https://swift.org/"))
       """#
-    } matches: {
+    } expansion: {
       """
       print(URL(string: "https://swift.org/")!)
       """
@@ -26,7 +26,7 @@ final class URLMacroTests: BaseTestCase {
       let domain = "domain.com"
       print(#URL("https://\(domain)/api/path"))
       """#
-    } matches: {
+    } diagnostics: {
       #"""
       let domain = "domain.com"
       print(#URL("https://\(domain)/api/path"))
@@ -41,7 +41,7 @@ final class URLMacroTests: BaseTestCase {
       #"""
       print(#URL("https://not a url.com"))
       """#
-    } matches: {
+    } diagnostics: {
       """
       print(#URL("https://not a url.com"))
             ┬────────────────────────────
