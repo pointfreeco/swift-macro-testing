@@ -59,7 +59,9 @@ public func assertMacro(
   )
 }
 
-@available(*, deprecated, message: "Delete 'applyFixIts' and 'matches' and re-record this assertion")
+@available(
+  *, deprecated, message: "Delete 'applyFixIts' and 'matches' and re-record this assertion"
+)
 public func assertMacro(
   _ macros: [String: Macro.Type]? = nil,
   applyFixIts: Bool,
@@ -74,7 +76,9 @@ public func assertMacro(
   XCTFail("Delete 'matches' and re-record this assertion", file: file, line: line)
 }
 
-@available(*, deprecated, message: "Delete 'applyFixIts' and 'matches' and re-record this assertion")
+@available(
+  *, deprecated, message: "Delete 'applyFixIts' and 'matches' and re-record this assertion"
+)
 public func assertMacro(
   _ macros: [Macro.Type],
   applyFixIts: Bool,
