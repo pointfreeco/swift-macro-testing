@@ -4,6 +4,7 @@ import SwiftSyntaxMacroExpansion
 
 extension Array where Element == Diagnostic {
   func underlineHighlights(
+    sourceString: String,
     lineNumber: Int,
     column: Int,
     context: BasicMacroExpansionContext
@@ -18,7 +19,10 @@ extension Array where Element == Diagnostic {
         let endLocation = context.location(
           for: highlight.endPositionBeforeTrailingTrivia, anchoredAt: diag.node, fileName: ""
         )
-        guard startLocation.line == lineNumber, startLocation.line == endLocation.line
+        guard
+          startLocation.line == lineNumber,
+          startLocation.line == endLocation.line,
+          sourceString.contains(diag.node.trimmedDescription)
         else { continue }
         partialResult.highlightColumns.formUnion(startLocation.column..<endLocation.column)
         partialResult.highlightLineLength = Swift.max(

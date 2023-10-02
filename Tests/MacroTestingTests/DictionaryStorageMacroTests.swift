@@ -42,4 +42,26 @@ final class DictionaryStorageMacroTests: BaseTestCase {
       """
     }
   }
+
+  func testExpansionWithoutInitializersEmitsError() {
+    assertMacro {
+      """
+      @DictionaryStorage
+      class Point {
+        let x: Int
+        let y: Int
+      }
+      """
+    } diagnostics: {
+      """
+      @DictionaryStorage
+      class Point {
+        let x: Int
+        ╰─ 🛑 stored property must have an initializer
+        let y: Int
+        ╰─ 🛑 stored property must have an initializer
+      }
+      """
+    }
+  }
 }
