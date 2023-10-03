@@ -10,26 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-import SwiftDiagnostics
 import SwiftSyntax
+import SwiftSyntaxMacros
 
-struct SimpleDiagnosticMessage: DiagnosticMessage, Error {
-  let message: String
-  let diagnosticID: MessageID
-  let severity: DiagnosticSeverity
-}
-
-extension SimpleDiagnosticMessage: FixItMessage {
-  var fixItID: MessageID { diagnosticID }
-}
-
-enum CustomError: Error, CustomStringConvertible {
-  case message(String)
-
-  var description: String {
-    switch self {
-    case .message(let text):
-      return text
+/// Peer 'var' with the name suffixed with '_peer'.
+public enum PeerValueWithSuffixNameMacro: PeerMacro {
+  public static func expansion(
+    of node: AttributeSyntax,
+    providingPeersOf declaration: some DeclSyntaxProtocol,
+    in context: some MacroExpansionContext
+  ) throws -> [DeclSyntax] {
+    guard let identified = declaration.asProtocol(NamedDeclSyntax.self) else {
+      return []
     }
+    return ["var \(raw: identified.name.text)_peer: Int { 1 }"]
   }
 }

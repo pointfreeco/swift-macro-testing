@@ -8,19 +8,80 @@ final class WrapStoredPropertiesMacroTests: BaseTestCase {
     }
   }
 
-  func testWrapStoredProperties() {
+  func testExpansionAddsPublished() {
     assertMacro {
       """
-      @wrapStoredProperties(#"available(*, deprecated, message: "hands off my data")"#)
-      struct OldStorage {
-        var x: Int
+      @wrapStoredProperties("Published")
+      struct Test {
+        var value: Int
       }
       """
     } expansion: {
       """
-      struct OldStorage {
+      struct Test {
+        @Published
+        var value: Int
+      }
+      """
+    }
+  }
+
+  func testExpansionAddsDeprecationAttribute() {
+    assertMacro {
+      """
+      @wrapStoredProperties(#"available(*, deprecated, message: "hands off my data")"#)
+      struct Test {
+        var value: Int
+      }
+      """
+    } expansion: {
+      """
+      struct Test {
         @available(*, deprecated, message: "hands off my data")
-        var x: Int
+        var value: Int
+      }
+      """
+    }
+  }
+
+  func testExpansionIgnoresComputedProperty() {
+    assertMacro {
+      """
+      @wrapStoredProperties("Published")
+      struct Test {
+        var value: Int {
+          get { return 0 }
+          set {}
+        }
+      }
+      """
+    } expansion: {
+      """
+      struct Test {
+        var value: Int {
+          get { return 0 }
+          set {}
+        }
+      }
+      """
+    }
+  }
+
+  func testExpansionWithInvalidAttributeEmitsError() {
+    assertMacro {
+      """
+      @wrapStoredProperties(12)
+      struct Test {
+        var value: Int
+      }
+      """
+    } diagnostics: {
+      """
+      @wrapStoredProperties(12)
+      ┬────────────────────────
+      ╰─ 🛑 macro requires a string literal containing the name of an attribute
+      struct Test {
+        var value: Int
       }
       """
     }

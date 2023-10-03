@@ -8,44 +8,42 @@ final class URLMacroTests: BaseTestCase {
     }
   }
 
-  func testURL() {
+  func testExpansionWithMalformedURLEmitsError() {
+    assertMacro {
+      """
+      let invalid = #URL("https://not a url.com")
+      """
+    } diagnostics: {
+      """
+      let invalid = #URL("https://not a url.com")
+                    ┬────────────────────────────
+                    ╰─ 🛑 malformed url: "https://not a url.com"
+      """
+    }
+  }
+
+  func testExpansionWithStringInterpolationEmitsError() {
     assertMacro {
       #"""
-      print(#URL("https://swift.org/"))
+      #URL("https://\(domain)/api/path")
       """#
+    } diagnostics: {
+      #"""
+      #URL("https://\(domain)/api/path")
+      ┬─────────────────────────────────
+      ╰─ 🛑 #URL requires a static string literal
+      """#
+    }
+  }
+
+  func testExpansionWithValidURL() {
+    assertMacro {
+      """
+      let valid = #URL("https://swift.org/")
+      """
     } expansion: {
       """
-      print(URL(string: "https://swift.org/")!)
-      """
-    }
-  }
-
-  func testNonStaticURL() {
-    assertMacro {
-      #"""
-      let domain = "domain.com"
-      print(#URL("https://\(domain)/api/path"))
-      """#
-    } diagnostics: {
-      #"""
-      let domain = "domain.com"
-      print(#URL("https://\(domain)/api/path"))
-            ┬─────────────────────────────────
-            ╰─ 🛑 #URL requires a static string literal
-      """#
-    }
-  }
-
-  func testMalformedURL() {
-    assertMacro {
-      #"""
-      print(#URL("https://not a url.com"))
-      """#
-    } diagnostics: {
-      """
-      print(#URL("https://not a url.com"))
-            ┬────────────────────────────
-            ╰─ 🛑 malformed url: "https://not a url.com"
+      let valid = URL(string: "https://swift.org/")!
       """
     }
   }

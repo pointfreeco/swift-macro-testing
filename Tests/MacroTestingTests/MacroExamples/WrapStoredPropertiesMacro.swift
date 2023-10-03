@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the Swift.org open source project
+//
+// Copyright (c) 2014 - 2023 Apple Inc. and the Swift project authors
+// Licensed under Apache License v2.0 with Runtime Library Exception
+//
+// See https://swift.org/LICENSE.txt for license information
+// See https://swift.org/CONTRIBUTORS.txt for the list of Swift project authors
+//
+//===----------------------------------------------------------------------===//
+
 import SwiftSyntax
 import SwiftSyntaxBuilder
 import SwiftSyntaxMacros
@@ -31,8 +43,7 @@ public struct WrapStoredPropertiesMacro: MemberAttributeMacro {
       stringLiteral.segments.count == 1,
       case let .stringSegment(wrapperName)? = stringLiteral.segments.first
     else {
-      throw CustomError.message(
-        "macro requires a string literal containing the name of an attribute")
+      throw CustomError.message("macro requires a string literal containing the name of an attribute")
     }
 
     return [

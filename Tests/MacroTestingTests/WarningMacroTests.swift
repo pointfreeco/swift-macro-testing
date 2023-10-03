@@ -8,16 +8,16 @@ final class WarningMacroTests: BaseTestCase {
     }
   }
 
-  func testWarning() {
+  func testExpansionWithValidStringLiteralEmitsWarning() {
     assertMacro {
-      #"""
-      #myWarning("remember to pass a string literal here")
-      """#
+      """
+      #myWarning("This is a warning")
+      """
     } diagnostics: {
       """
-      #myWarning("remember to pass a string literal here")
-      ┬───────────────────────────────────────────────────
-      ╰─ ⚠️ remember to pass a string literal here
+      #myWarning("This is a warning")
+      ┬──────────────────────────────
+      ╰─ ⚠️ This is a warning
       """
     } expansion: {
       """
@@ -26,19 +26,31 @@ final class WarningMacroTests: BaseTestCase {
     }
   }
 
-  func testNonLiteral() {
+  func testExpansionWithInvalidExpressionEmitsError() {
     assertMacro {
       """
-      let text = "oops"
-      #myWarning(text)
+      #myWarning(42)
       """
     } diagnostics: {
       """
-      let text = "oops"
-      #myWarning(text)
-      ┬───────────────
+      #myWarning(42)
+      ┬─────────────
       ╰─ 🛑 #myWarning macro requires a string literal
       """
+    }
+  }
+
+  func testExpansionWithStringInterpolationEmitsError() {
+    assertMacro {
+      #"""
+      #myWarning("Say hello \(number) times!")
+      """#
+    } diagnostics: {
+      #"""
+      #myWarning("Say hello \(number) times!")
+      ┬───────────────────────────────────────
+      ╰─ 🛑 #myWarning macro requires a string literal
+      """#
     }
   }
 }

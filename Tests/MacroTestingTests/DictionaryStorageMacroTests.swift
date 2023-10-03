@@ -3,12 +3,17 @@ import XCTest
 
 final class DictionaryStorageMacroTests: BaseTestCase {
   override func invokeTest() {
-    withMacroTesting(macros: [DictionaryStorageMacro.self]) {
+    withMacroTesting(
+      macros: [
+        DictionaryStorageMacro.self,
+        DictionaryStoragePropertyMacro.self,
+      ]
+    ) {
       super.invokeTest()
     }
   }
 
-  func testDictionaryStorage() {
+  func testExpansionConvertsStoredProperties() {
     assertMacro {
       """
       @DictionaryStorage
@@ -60,6 +65,31 @@ final class DictionaryStorageMacroTests: BaseTestCase {
         ╰─ 🛑 stored property must have an initializer
         let y: Int
         ╰─ 🛑 stored property must have an initializer
+      }
+      """
+    }
+  }
+
+  func testExpansionIgnoresComputedProperties() {
+    assertMacro {
+      """
+      @DictionaryStorage
+      struct Test {
+        var value: Int {
+          get { return 0 }
+          set {}
+        }
+      }
+      """
+    } expansion: {
+      """
+      struct Test {
+        var value: Int {
+          get { return 0 }
+          set {}
+        }
+
+        var _storage: [String: Any] = [:]
       }
       """
     }

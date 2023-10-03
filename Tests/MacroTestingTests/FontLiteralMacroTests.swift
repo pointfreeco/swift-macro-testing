@@ -8,24 +8,26 @@ final class FontLiteralMacroTests: BaseTestCase {
     }
   }
 
-  func testFontLiteral() {
+  func testExpansionWithNamedArguments() {
     assertMacro {
       """
-      struct Font: ExpressibleByFontLiteral {
-        init(fontLiteralName: String, size: Int, weight: MacroExamplesLib.FontWeight) {
-        }
-      }
-
-      let _: Font = #fontLiteral(name: "Comic Sans", size: 14, weight: .thin)
+      #fontLiteral(name: "Comic Sans", size: 14, weight: .thin)
       """
     } expansion: {
       """
-      struct Font: ExpressibleByFontLiteral {
-        init(fontLiteralName: String, size: Int, weight: MacroExamplesLib.FontWeight) {
-        }
-      }
+      .init(fontLiteralName: "Comic Sans", size: 14, weight: .thin)
+      """
+    }
+  }
 
-      let _: Font = .init(fontLiteralName: "Comic Sans", size: 14, weight: .thin)
+  func testExpansionWithUnlabeledFirstArgument() {
+    assertMacro {
+      """
+      #fontLiteral("Copperplate Gothic", size: 69, weight: .bold)
+      """
+    } expansion: {
+      """
+      .init(fontLiteralName: "Copperplate Gothic", size: 69, weight: .bold)
       """
     }
   }

@@ -1,3 +1,15 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the Swift.org open source project
+//
+// Copyright (c) 2014 - 2023 Apple Inc. and the Swift project authors
+// Licensed under Apache License v2.0 with Runtime Library Exception
+//
+// See https://swift.org/LICENSE.txt for license information
+// See https://swift.org/CONTRIBUTORS.txt for the list of Swift project authors
+//
+//===----------------------------------------------------------------------===//
+
 import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
@@ -21,9 +33,9 @@ public struct AddCompletionHandlerMacro: PeerMacro {
     if funcDecl.signature.effectSpecifiers?.asyncSpecifier == nil {
       let newEffects: FunctionEffectSpecifiersSyntax
       if let existingEffects = funcDecl.signature.effectSpecifiers {
-        newEffects = existingEffects.with(\.asyncSpecifier, "async ")
+        newEffects = existingEffects.with(\.asyncSpecifier, .keyword(.async))
       } else {
-        newEffects = FunctionEffectSpecifiersSyntax(asyncSpecifier: "async ")
+        newEffects = FunctionEffectSpecifiersSyntax(asyncSpecifier: .keyword(.async))
       }
 
       let newSignature = funcDecl.signature.with(\.effectSpecifiers, newEffects)
@@ -39,6 +51,7 @@ public struct AddCompletionHandlerMacro: PeerMacro {
           severity: .error
         ),
         fixIts: [
+          // Fix-It to replace the '+' with a '-'.
           FixIt(
             message: SimpleDiagnosticMessage(
               message: "add 'async'",
@@ -60,8 +73,7 @@ public struct AddCompletionHandlerMacro: PeerMacro {
     }
 
     // Form the completion handler parameter.
-    let resultType: TypeSyntax? = funcDecl.signature.returnClause?.type.with(\.leadingTrivia, [])
-      .with(\.trailingTrivia, [])
+    let resultType: TypeSyntax? = funcDecl.signature.returnClause?.type.with(\.leadingTrivia, []).with(\.trailingTrivia, [])
 
     let completionHandlerParam =
       FunctionParameterSyntax(

@@ -8,19 +8,19 @@ final class MetaEnumMacroTests: BaseTestCase {
     }
   }
 
-  func testMetaEnum() {
+  func testExpansionAddsNestedMetaEnum() {
     assertMacro {
-      #"""
-      @MetaEnum enum Value {
+      """
+      @MetaEnum enum Cell {
         case integer(Int)
         case text(String)
         case boolean(Bool)
         case null
       }
-      """#
+      """
     } expansion: {
       """
-      enum Value {
+      enum Cell {
         case integer(Int)
         case text(String)
         case boolean(Bool)
@@ -31,7 +31,7 @@ final class MetaEnumMacroTests: BaseTestCase {
           case text
           case boolean
           case null
-          init(_ __macro_local_6parentfMu_: Value) {
+          init(_ __macro_local_6parentfMu_: Cell) {
             switch __macro_local_6parentfMu_ {
             case .integer:
               self = .integer
@@ -49,7 +49,7 @@ final class MetaEnumMacroTests: BaseTestCase {
     }
   }
 
-  func testAccess() {
+  func testExpansionAddsPublicNestedMetaEnum() {
     assertMacro {
       """
       @MetaEnum public enum Cell {
@@ -85,7 +85,7 @@ final class MetaEnumMacroTests: BaseTestCase {
     }
   }
 
-  func testNonEnum() {
+  func testExpansionOnStructEmitsError() {
     assertMacro {
       """
       @MetaEnum struct Cell {
