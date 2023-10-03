@@ -8,27 +8,52 @@ final class CustomCodableMacroTests: BaseTestCase {
     }
   }
 
-  func testCustomCodable() {
+  func testExpansionAddsDefaultCodingKeys() {
     assertMacro {
       """
       @CustomCodable
-      struct CustomCodableString: Codable {
-        @CodableKey(name: "OtherName")
-        var propertyWithOtherName: String
-        var propertyWithSameName: Bool
+      struct Person {
+        let name: String
+        let age: Int
+      }
+      """
+    } expansion: {
+      """
+      struct Person {
+        let name: String
+        let age: Int
+
+        enum CodingKeys: String, CodingKey {
+          case name
+          case age
+        }
+      }
+      """
+    }
+  }
+
+  func testExpansionWithCodableKeyAddsCustomCodingKeys() {
+    assertMacro {
+      """
+      @CustomCodable
+      struct Person {
+        let name: String
+        @CodableKey("user_age") let age: Int
+      
         func randomFunction() {}
       }
       """
     } expansion: {
       """
-      struct CustomCodableString: Codable {
-        var propertyWithOtherName: String
-        var propertyWithSameName: Bool
+      struct Person {
+        let name: String
+        let age: Int
+
         func randomFunction() {}
 
         enum CodingKeys: String, CodingKey {
-          case propertyWithOtherName = "OtherName"
-          case propertyWithSameName
+          case name
+          case age = "user_age"
         }
       }
       """

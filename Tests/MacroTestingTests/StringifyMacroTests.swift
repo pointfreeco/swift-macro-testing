@@ -8,19 +8,27 @@ final class StringifyMacroTests: BaseTestCase {
     }
   }
 
-  func testStringify() {
+  func testExpansionWithBasicArithmeticExpression() {
     assertMacro {
-      #"""
-      let x = 1
-      let y = 2
-      print(#stringify(x + y))
-      """#
+      """
+      let a = #stringify(x + y)
+      """
     } expansion: {
       """
-      let x = 1
-      let y = 2
-      print((x + y, "x + y"))
+      let a = (x + y, "x + y")
       """
+    }
+  }
+
+  func testExpansionWithStringInterpolation() {
+    assertMacro {
+      #"""
+      let b = #stringify("Hello, \(name)")
+      """#
+    } expansion: {
+      #"""
+      let b = ("Hello, \(name)", #""Hello, \(name)""#)
+      """#
     }
   }
 }

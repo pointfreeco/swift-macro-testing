@@ -10,26 +10,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-import SwiftDiagnostics
 import SwiftSyntax
+import SwiftSyntaxMacros
 
-struct SimpleDiagnosticMessage: DiagnosticMessage, Error {
-  let message: String
-  let diagnosticID: MessageID
-  let severity: DiagnosticSeverity
-}
-
-extension SimpleDiagnosticMessage: FixItMessage {
-  var fixItID: MessageID { diagnosticID }
-}
-
-enum CustomError: Error, CustomStringConvertible {
-  case message(String)
-
-  var description: String {
-    switch self {
-    case .message(let text):
-      return text
-    }
+/// Add '@available(*, deprecated)' to members.
+public enum MemberDeprecatedMacro: MemberAttributeMacro {
+  public static func expansion(
+    of node: AttributeSyntax,
+    attachedTo declaration: some DeclGroupSyntax,
+    providingAttributesFor member: some DeclSyntaxProtocol,
+    in context: some MacroExpansionContext
+  ) throws -> [AttributeSyntax] {
+    return ["@available(*, deprecated)"]
   }
 }

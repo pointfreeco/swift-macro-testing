@@ -1,9 +1,58 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the Swift.org open source project
+//
+// Copyright (c) 2014 - 2023 Apple Inc. and the Swift project authors
+// Licensed under Apache License v2.0 with Runtime Library Exception
+//
+// See https://swift.org/LICENSE.txt for license information
+// See https://swift.org/CONTRIBUTORS.txt for the list of Swift project authors
+//
+//===----------------------------------------------------------------------===//
+
 import SwiftSyntax
 import SwiftSyntaxMacros
 
 public struct DictionaryStorageMacro {}
 
-extension DictionaryStorageMacro: AccessorMacro {
+extension DictionaryStorageMacro: MemberMacro {
+  public static func expansion(
+    of node: AttributeSyntax,
+    providingMembersOf declaration: some DeclGroupSyntax,
+    in context: some MacroExpansionContext
+  ) throws -> [DeclSyntax] {
+    let storage: DeclSyntax = "var _storage: [String: Any] = [:]"
+    return [
+      storage.with(\.leadingTrivia, [.newlines(1), .spaces(2)])
+    ]
+  }
+}
+
+extension DictionaryStorageMacro: MemberAttributeMacro {
+  public static func expansion(
+    of node: AttributeSyntax,
+    attachedTo declaration: some DeclGroupSyntax,
+    providingAttributesFor member: some DeclSyntaxProtocol,
+    in context: some MacroExpansionContext
+  ) throws -> [AttributeSyntax] {
+    guard let property = member.as(VariableDeclSyntax.self),
+      property.isStoredProperty
+    else {
+      return []
+    }
+
+    return [
+      AttributeSyntax(
+        attributeName: IdentifierTypeSyntax(
+          name: .identifier("DictionaryStorageProperty")
+        )
+      )
+      .with(\.leadingTrivia, [.newlines(1), .spaces(2)])
+    ]
+  }
+}
+
+public struct DictionaryStoragePropertyMacro: AccessorMacro {
   public static func expansion<
     Context: MacroExpansionContext,
     Declaration: DeclSyntaxProtocol
@@ -33,50 +82,14 @@ extension DictionaryStorageMacro: AccessorMacro {
     return [
       """
       get {
-      _storage[\(literal: identifier.text), default: \(defaultValue)] as! \(type)
+        _storage[\(literal: identifier.text), default: \(defaultValue)] as! \(type)
       }
       """,
       """
       set {
-      _storage[\(literal: identifier.text)] = newValue
+        _storage[\(literal: identifier.text)] = newValue
       }
       """,
-    ]
-  }
-}
-
-extension DictionaryStorageMacro: MemberMacro {
-  public static func expansion(
-    of node: AttributeSyntax,
-    providingMembersOf declaration: some DeclGroupSyntax,
-    in context: some MacroExpansionContext
-  ) throws -> [DeclSyntax] {
-    let storage: DeclSyntax = "var _storage: [String: Any] = [:]"
-    return [
-      storage.with(\.leadingTrivia, [.newlines(1), .spaces(2)])
-    ]
-  }
-}
-
-extension DictionaryStorageMacro: MemberAttributeMacro {
-  public static func expansion(
-    of node: AttributeSyntax, attachedTo declaration: some DeclGroupSyntax,
-    providingAttributesFor member: some DeclSyntaxProtocol,
-    in context: some MacroExpansionContext
-  ) throws -> [AttributeSyntax] {
-    guard let property = member.as(VariableDeclSyntax.self),
-      property.isStoredProperty
-    else {
-      return []
-    }
-
-    return [
-      AttributeSyntax(
-        attributeName: IdentifierTypeSyntax(
-          name: .identifier("DictionaryStorage")
-        )
-      )
-      .with(\.leadingTrivia, [.newlines(1), .spaces(2)])
     ]
   }
 }

@@ -1,15 +1,27 @@
+//===----------------------------------------------------------------------===//
+//
+// This source file is part of the Swift.org open source project
+//
+// Copyright (c) 2014 - 2023 Apple Inc. and the Swift project authors
+// Licensed under Apache License v2.0 with Runtime Library Exception
+//
+// See https://swift.org/LICENSE.txt for license information
+// See https://swift.org/CONTRIBUTORS.txt for the list of Swift project authors
+//
+//===----------------------------------------------------------------------===//
+
 import SwiftDiagnostics
 import SwiftSyntax
 import SwiftSyntaxMacros
 
 /// Implementation of the `myWarning` macro, which mimics the behavior of the
 /// built-in `#warning`.
-public struct WarningMacro: ExpressionMacro {
+public enum WarningMacro: ExpressionMacro {
   public static func expansion(
-    of macro: some FreestandingMacroExpansionSyntax,
+    of node: some FreestandingMacroExpansionSyntax,
     in context: some MacroExpansionContext
   ) throws -> ExprSyntax {
-    guard let firstElement = macro.argumentList.first,
+    guard let firstElement = node.argumentList.first,
       let stringLiteral = firstElement.expression
         .as(StringLiteralExprSyntax.self),
       stringLiteral.segments.count == 1,
@@ -20,10 +32,10 @@ public struct WarningMacro: ExpressionMacro {
 
     context.diagnose(
       Diagnostic(
-        node: Syntax(macro),
+        node: Syntax(node),
         message: SimpleDiagnosticMessage(
           message: messageString.content.description,
-          diagnosticID: MessageID(domain: "test", id: "error"),
+          diagnosticID: MessageID(domain: "test123", id: "error"),
           severity: .warning
         )
       )

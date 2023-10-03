@@ -10,26 +10,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-import SwiftDiagnostics
 import SwiftSyntax
+import SwiftSyntaxMacros
 
-struct SimpleDiagnosticMessage: DiagnosticMessage, Error {
-  let message: String
-  let diagnosticID: MessageID
-  let severity: DiagnosticSeverity
-}
+public enum EquatableExtensionMacro: ExtensionMacro {
+  public static func expansion(
+    of node: AttributeSyntax,
+    attachedTo declaration: some DeclGroupSyntax,
+    providingExtensionsOf type: some TypeSyntaxProtocol,
+    conformingTo protocols: [TypeSyntax],
+    in context: some MacroExpansionContext
+  ) throws -> [ExtensionDeclSyntax] {
+    let equatableExtension = try ExtensionDeclSyntax("extension \(type.trimmed): Equatable {}")
 
-extension SimpleDiagnosticMessage: FixItMessage {
-  var fixItID: MessageID { diagnosticID }
-}
-
-enum CustomError: Error, CustomStringConvertible {
-  case message(String)
-
-  var description: String {
-    switch self {
-    case .message(let text):
-      return text
-    }
+    return [equatableExtension]
   }
 }
