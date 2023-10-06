@@ -21,9 +21,7 @@ public struct MetaEnumMacro {
   let access: DeclModifierListSyntax.Element?
   let parentParamName: TokenSyntax
 
-  init(
-    node: AttributeSyntax, declaration: some DeclGroupSyntax, context: some MacroExpansionContext
-  ) throws {
+  init(node: AttributeSyntax, declaration: some DeclGroupSyntax, context: some MacroExpansionContext) throws {
     guard let enumDecl = declaration.as(EnumDeclSyntax.self) else {
       throw DiagnosticsError(diagnostics: [
         CaseMacroDiagnostic.notAnEnum(declaration).diagnose(at: Syntax(node))
@@ -96,7 +94,7 @@ extension EnumDeclSyntax {
   var caseElements: [EnumCaseElementSyntax] {
     memberBlock.members.flatMap { member in
       guard let caseDecl = member.decl.as(EnumCaseDeclSyntax.self) else {
-        return [EnumCaseElementSyntax]()
+        return Array<EnumCaseElementSyntax>()
       }
 
       return Array(caseDecl.elements)
@@ -112,8 +110,7 @@ extension CaseMacroDiagnostic: DiagnosticMessage {
   var message: String {
     switch self {
     case .notAnEnum(let decl):
-      return
-        "'@MetaEnum' can only be attached to an enum, not \(decl.descriptiveDeclKind(withArticle: true))"
+      return "'@MetaEnum' can only be attached to an enum, not \(decl.descriptiveDeclKind(withArticle: true))"
     }
   }
 

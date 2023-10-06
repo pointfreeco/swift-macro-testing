@@ -297,9 +297,7 @@ public func assertMacro(
       )
     }
 
-    if allDiagnostics.filter({ $0.diagMessage.severity == .error }).isEmpty
-      || expandedSource != nil
-    {
+    if allDiagnostics.filter({ $0.diagMessage.severity == .error }).isEmpty {
       offset += 1
       assertInlineSnapshot(
         of: expandedSourceFile.description.trimmingCharacters(in: .newlines),

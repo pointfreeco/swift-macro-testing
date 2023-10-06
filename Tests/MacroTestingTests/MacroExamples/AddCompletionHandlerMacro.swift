@@ -73,8 +73,7 @@ public struct AddCompletionHandlerMacro: PeerMacro {
     }
 
     // Form the completion handler parameter.
-    let resultType: TypeSyntax? = funcDecl.signature.returnClause?.type.with(\.leadingTrivia, [])
-      .with(\.trailingTrivia, [])
+    let resultType: TypeSyntax? = funcDecl.signature.returnClause?.type.with(\.leadingTrivia, []).with(\.trailingTrivia, [])
 
     let completionHandlerParam =
       FunctionParameterSyntax(

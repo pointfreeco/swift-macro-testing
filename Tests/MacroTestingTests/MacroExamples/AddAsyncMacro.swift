@@ -42,20 +42,15 @@ public struct AddAsyncMacro: PeerMacro {
     }
 
     // This only makes sense void functions
-    if funcDecl.signature.returnClause?.type.with(\.leadingTrivia, []).with(\.trailingTrivia, [])
-      .description != "Void"
-    {
+    if funcDecl.signature.returnClause?.type.with(\.leadingTrivia, []).with(\.trailingTrivia, []).description != "Void" {
       throw CustomError.message(
         "@addAsync requires an function that returns void"
       )
     }
 
     // Requires a completion handler block as last parameter
-    guard
-      let completionHandlerParameterAttribute = funcDecl.signature.parameterClause.parameters.last?
-        .type.as(AttributedTypeSyntax.self),
-      let completionHandlerParameter = completionHandlerParameterAttribute.baseType.as(
-        FunctionTypeSyntax.self)
+    guard let completionHandlerParameterAttribute = funcDecl.signature.parameterClause.parameters.last?.type.as(AttributedTypeSyntax.self),
+      let completionHandlerParameter = completionHandlerParameterAttribute.baseType.as(FunctionTypeSyntax.self)
     else {
       throw CustomError.message(
         "@addAsync requires an function that has a completion handler as last parameter"
@@ -63,9 +58,7 @@ public struct AddAsyncMacro: PeerMacro {
     }
 
     // Completion handler needs to return Void
-    if completionHandlerParameter.returnClause.type.with(\.leadingTrivia, []).with(
-      \.trailingTrivia, []
-    ).description != "Void" {
+    if completionHandlerParameter.returnClause.type.with(\.leadingTrivia, []).with(\.trailingTrivia, []).description != "Void" {
       throw CustomError.message(
         "@addAsync requires an function that has a completion handler that returns Void"
       )
@@ -74,18 +67,14 @@ public struct AddAsyncMacro: PeerMacro {
     let returnType = completionHandlerParameter.parameters.first?.type
 
     let isResultReturn = returnType?.children(viewMode: .all).first?.description == "Result"
-    let successReturnType =
-      isResultReturn
-      ? returnType!.as(IdentifierTypeSyntax.self)!.genericArgumentClause?.arguments.first!.argument
-      : returnType
+    let successReturnType = isResultReturn ? returnType!.as(IdentifierTypeSyntax.self)!.genericArgumentClause?.arguments.first!.argument : returnType
 
     // Remove completionHandler and comma from the previous parameter
     var newParameterList = funcDecl.signature.parameterClause.parameters
     newParameterList.removeLast()
     let newParameterListLastParameter = newParameterList.last!
     newParameterList.removeLast()
-    newParameterList.append(
-      newParameterListLastParameter.with(\.trailingTrivia, []).with(\.trailingComma, nil))
+    newParameterList.append(newParameterListLastParameter.with(\.trailingTrivia, []).with(\.trailingComma, nil))
 
     // Drop the @addAsync attribute from the new declaration.
     let newAttributeList = funcDecl.attributes.filter {
@@ -147,9 +136,7 @@ public struct AddAsyncMacro: PeerMacro {
           )
           .with(
             \.returnClause,
-            successReturnType != nil
-              ? ReturnClauseSyntax(
-                leadingTrivia: .space, type: successReturnType!.with(\.leadingTrivia, .space)) : nil
+            successReturnType != nil ? ReturnClauseSyntax(leadingTrivia: .space, type: successReturnType!.with(\.leadingTrivia, .space)) : nil
           )  // add result type
           .with(
             \.parameterClause,
