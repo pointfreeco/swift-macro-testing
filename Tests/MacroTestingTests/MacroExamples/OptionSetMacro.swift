@@ -91,7 +91,9 @@ public struct OptionSetMacro {
         stringLiteral.segments.count == 1,
         case let .stringSegment(optionsEnumNameString)? = stringLiteral.segments.first
       else {
-        context.diagnose(OptionSetMacroDiagnostic.requiresStringLiteral(optionsEnumNameArgumentLabel).diagnose(at: optionEnumNameArg.expression))
+        context.diagnose(
+          OptionSetMacroDiagnostic.requiresStringLiteral(optionsEnumNameArgumentLabel).diagnose(
+            at: optionEnumNameArg.expression))
         return nil
       }
 
@@ -118,12 +120,15 @@ public struct OptionSetMacro {
         return nil
       }).first
     else {
-      context.diagnose(OptionSetMacroDiagnostic.requiresOptionsEnum(optionsEnumName).diagnose(at: decl))
+      context.diagnose(
+        OptionSetMacroDiagnostic.requiresOptionsEnum(optionsEnumName).diagnose(at: decl))
       return nil
     }
 
     // Retrieve the raw type from the attribute.
-    guard let genericArgs = attribute.attributeName.as(IdentifierTypeSyntax.self)?.genericArgumentClause,
+    guard
+      let genericArgs = attribute.attributeName.as(IdentifierTypeSyntax.self)?
+        .genericArgumentClause,
       let rawType = genericArgs.arguments.first?.argument
     else {
       context.diagnose(OptionSetMacroDiagnostic.requiresOptionsEnumRawType.diagnose(at: attribute))
@@ -143,14 +148,15 @@ extension OptionSetMacro: ExtensionMacro {
     in context: some MacroExpansionContext
   ) throws -> [ExtensionDeclSyntax] {
     // Decode the expansion arguments.
-    guard let (structDecl, _, _) = decodeExpansion(of: node, attachedTo: declaration, in: context) else {
+    guard let (structDecl, _, _) = decodeExpansion(of: node, attachedTo: declaration, in: context)
+    else {
       return []
     }
 
     // If there is an explicit conformance to OptionSet already, don't add one.
     if let inheritedTypes = structDecl.inheritanceClause?.inheritedTypes,
       inheritedTypes.contains(
-        where: { inherited in inherited.type.trimmedDescription == "OptionSet"
+        where: { inherited in inherited.type.trimmedDescription == "OptionSet" }
       )
     {
       return []
@@ -167,14 +173,16 @@ extension OptionSetMacro: MemberMacro {
     in context: some MacroExpansionContext
   ) throws -> [DeclSyntax] {
     // Decode the expansion arguments.
-    guard let (_, optionsEnum, rawType) = decodeExpansion(of: attribute, attachedTo: decl, in: context) else {
+    guard
+      let (_, optionsEnum, rawType) = decodeExpansion(of: attribute, attachedTo: decl, in: context)
+    else {
       return []
     }
 
     // Find all of the case elements.
     let caseElements = optionsEnum.memberBlock.members.flatMap { member in
       guard let caseDecl = member.decl.as(EnumCaseDeclSyntax.self) else {
-        return Array<EnumCaseElementSyntax>()
+        return [EnumCaseElementSyntax]()
       }
 
       return Array(caseDecl.elements)
