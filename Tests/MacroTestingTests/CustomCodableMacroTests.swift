@@ -39,7 +39,7 @@ final class CustomCodableMacroTests: BaseTestCase {
       struct Person {
         let name: String
         @CodableKey("user_age") let age: Int
-      
+
         func randomFunction() {}
       }
       """

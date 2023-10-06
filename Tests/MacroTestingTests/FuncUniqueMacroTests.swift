@@ -4,7 +4,7 @@ import XCTest
 final class FuncUniqueMacroTests: BaseTestCase {
   override func invokeTest() {
     withMacroTesting(
-      macros: [FuncUniqueMacro.self,]
+      macros: [FuncUniqueMacro.self]
     ) {
       super.invokeTest()
     }

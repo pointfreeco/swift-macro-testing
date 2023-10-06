@@ -14,9 +14,9 @@ final class MemberDepreacatedMacroTests: XCTestCase {
       @memberDeprecated
       public struct SomeStruct {
         typealias MacroName = String
-      
+
         public var oldProperty: Int = 420
-      
+
         func oldMethod() {
           print("This is an old method.")
         }
