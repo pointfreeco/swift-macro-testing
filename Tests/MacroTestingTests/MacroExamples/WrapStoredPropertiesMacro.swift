@@ -43,17 +43,16 @@ public struct WrapStoredPropertiesMacro: MemberAttributeMacro {
       stringLiteral.segments.count == 1,
       case let .stringSegment(wrapperName)? = stringLiteral.segments.first
     else {
-      throw CustomError.message(
-        "macro requires a string literal containing the name of an attribute")
+      throw CustomError.message("macro requires a string literal containing the name of an attribute")
     }
 
     return [
       AttributeSyntax(
+        leadingTrivia: [.newlines(1), .spaces(2)],
         attributeName: IdentifierTypeSyntax(
           name: .identifier(wrapperName.content.text)
         )
       )
-      .with(\.leadingTrivia, [.newlines(1), .spaces(2)])
     ]
   }
 }

@@ -30,8 +30,7 @@ extension NewTypeMacro: MemberMacro {
           .expression.as(MemberAccessExprSyntax.self),
         let rawType = memberAccessExn.base?.as(DeclReferenceExprSyntax.self)
       else {
-        throw CustomError.message(
-          #"@NewType requires the raw type as an argument, in the form "RawType.self"."#)
+        throw CustomError.message(#"@NewType requires the raw type as an argument, in the form "RawType.self"."#)
       }
 
       guard let declaration = declaration.as(StructDeclSyntax.self) else {
