@@ -328,11 +328,8 @@ struct DiagnosticsFormatter {
           }
         }
         annotatedSource.append("\(preMessage)╰─ \(colorizeIfRequested(diags.last!.diagMessage))\n")
-        for fixIt in diags.last!.fixIts.dropLast(1) {
+        for fixIt in diags.last!.fixIts {
           annotatedSource.append("\(preMessage)   ✏️ \(fixIt.message.message)\n")
-        }
-        if !diags.last!.fixIts.isEmpty {
-          annotatedSource.append("\(preMessage)   ✏️ \(diags.last!.fixIts.last!.message.message)\n")
         }
       }
 
