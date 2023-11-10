@@ -602,7 +602,9 @@ private class FixItApplier: SyntaxRewriter {
               .location(for: oldNode.position, anchoredAt: oldNode, fileName: "")
               .offset
             if node.position.utf8Offset == offset {
-              return newNode
+              if node.kind == oldNode.kind {
+                return newNode
+              }
             }
           default:
             break

@@ -324,12 +324,15 @@ struct DiagnosticsFormatter {
         for diag in diags.dropLast(1) {
           annotatedSource.append("\(preMessage)├─ \(colorizeIfRequested(diag.diagMessage))\n")
           for fixIt in diag.fixIts {
-            annotatedSource.append("\(preMessage)│  ✏️ \(fixIt.message.message)")
+            annotatedSource.append("\(preMessage)│  ✏️ \(fixIt.message.message)\n")
           }
         }
         annotatedSource.append("\(preMessage)╰─ \(colorizeIfRequested(diags.last!.diagMessage))\n")
-        for fixIt in diags.last!.fixIts {
-          annotatedSource.append("\(preMessage)   ✏️ \(fixIt.message.message)")
+        for fixIt in diags.last!.fixIts.dropLast(1) {
+          annotatedSource.append("\(preMessage)   ✏️ \(fixIt.message.message)\n")
+        }
+        if !diags.last!.fixIts.isEmpty {
+          annotatedSource.append("\(preMessage)   ✏️ \(diags.last!.fixIts.last!.message.message)\n")
         }
       }
 
