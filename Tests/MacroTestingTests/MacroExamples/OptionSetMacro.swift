@@ -79,8 +79,7 @@ public struct OptionSetMacro {
   static func decodeExpansion(
     of attribute: AttributeSyntax,
     attachedTo decl: some DeclGroupSyntax,
-    in context: some MacroExpansionContext,
-    emitDiagnostics: Bool
+    in context: some MacroExpansionContext
   ) -> (StructDeclSyntax, EnumDeclSyntax, TypeSyntax)? {
     // Determine the name of the options enum.
     let optionsEnumName: String
@@ -92,11 +91,9 @@ public struct OptionSetMacro {
         stringLiteral.segments.count == 1,
         case let .stringSegment(optionsEnumNameString)? = stringLiteral.segments.first
       else {
-        if emitDiagnostics {
-          context.diagnose(
-            OptionSetMacroDiagnostic.requiresStringLiteral(optionsEnumNameArgumentLabel).diagnose(
-              at: optionEnumNameArg.expression))
-        }
+        context.diagnose(
+          OptionSetMacroDiagnostic.requiresStringLiteral(optionsEnumNameArgumentLabel).diagnose(
+            at: optionEnumNameArg.expression))
         return nil
       }
 
@@ -107,21 +104,7 @@ public struct OptionSetMacro {
 
     // Only apply to structs.
     guard let structDecl = decl.as(StructDeclSyntax.self) else {
-      if emitDiagnostics {
-        // Offer a fix-it to remove the attribute
-        let fixit = FixIt(message: SimpleDiagnosticMessage(message: "Remove '@OptionSet' attribute",
-                                                           diagnosticID: MessageID(domain: "Swift", id: "OptionSet.fixit"),
-                                                           severity: .error),
-                          changes: [
-                            // Doesn't account for the fact that there may be other attributes present, but for
-                            // this unit test it should be fine.
-                            .replace(oldNode: Syntax(decl.attributes), newNode: Syntax(AttributeListSyntax()))
-                          ])
-
-        context.diagnose(Diagnostic(node: decl,
-                                    message: OptionSetMacroDiagnostic.requiresStruct,
-                                    fixIt: fixit))
-      }
+      context.diagnose(OptionSetMacroDiagnostic.requiresStruct.diagnose(at: decl))
       return nil
     }
 
@@ -137,10 +120,8 @@ public struct OptionSetMacro {
         return nil
       }).first
     else {
-      if emitDiagnostics {
-        context.diagnose(
-          OptionSetMacroDiagnostic.requiresOptionsEnum(optionsEnumName).diagnose(at: decl))
-      }
+      context.diagnose(
+        OptionSetMacroDiagnostic.requiresOptionsEnum(optionsEnumName).diagnose(at: decl))
       return nil
     }
 
@@ -150,9 +131,7 @@ public struct OptionSetMacro {
         .genericArgumentClause,
       let rawType = genericArgs.arguments.first?.argument
     else {
-      if emitDiagnostics {
-        context.diagnose(OptionSetMacroDiagnostic.requiresOptionsEnumRawType.diagnose(at: attribute))
-      }
+      context.diagnose(OptionSetMacroDiagnostic.requiresOptionsEnumRawType.diagnose(at: attribute))
       return nil
     }
 
@@ -169,7 +148,7 @@ extension OptionSetMacro: ExtensionMacro {
     in context: some MacroExpansionContext
   ) throws -> [ExtensionDeclSyntax] {
     // Decode the expansion arguments.
-    guard let (structDecl, _, _) = decodeExpansion(of: node, attachedTo: declaration, in: context, emitDiagnostics: false)
+    guard let (structDecl, _, _) = decodeExpansion(of: node, attachedTo: declaration, in: context)
     else {
       return []
     }
@@ -195,7 +174,7 @@ extension OptionSetMacro: MemberMacro {
   ) throws -> [DeclSyntax] {
     // Decode the expansion arguments.
     guard
-      let (_, optionsEnum, rawType) = decodeExpansion(of: attribute, attachedTo: decl, in: context, emitDiagnostics: true)
+      let (_, optionsEnum, rawType) = decodeExpansion(of: attribute, attachedTo: decl, in: context)
     else {
       return []
     }
