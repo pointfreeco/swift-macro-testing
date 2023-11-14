@@ -211,7 +211,7 @@ public func assertMacro(
         of: diagnostics,
         as: ._lines,
         message: """
-          Diagnostic output (\(actualPrefix)) differed from expected output (\(expectedPrefix)). \
+          Diagnostic output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
           Difference: …
           """,
         syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
@@ -259,7 +259,7 @@ public func assertMacro(
         of: fixedSourceFile.description.trimmingCharacters(in: .newlines),
         as: ._lines,
         message: """
-          Fixed output (\(actualPrefix)) differed from expected output (\(expectedPrefix)). \
+          Fixed output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
           Difference: …
           """,
         syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
@@ -303,7 +303,7 @@ public func assertMacro(
         of: expandedSourceFile.description.trimmingCharacters(in: .newlines),
         as: ._lines,
         message: """
-          Expanded output (\(actualPrefix)) differed from expected output (\(expectedPrefix)). \
+          Expanded output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
           Difference: …
           """,
         syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
@@ -497,13 +497,13 @@ extension Snapshotting where Value == String, Format == String {
     diffing: Diffing(
       toData: { Data($0.utf8) },
       fromData: { String(decoding: $0, as: UTF8.self) }
-    ) { actual, expected in
-      guard expected != actual else { return nil }
+    ) { old, new in
+      guard old != new else { return nil }
 
-      let actualLines = actual.split(separator: "\n", omittingEmptySubsequences: false)
+      let newLines = new.split(separator: "\n", omittingEmptySubsequences: false)
 
-      let expectedLines = expected.split(separator: "\n", omittingEmptySubsequences: false)
-      let difference = actualLines.difference(from: expectedLines)
+      let oldLines = old.split(separator: "\n", omittingEmptySubsequences: false)
+      let difference = newLines.difference(from: oldLines)
 
       var result = ""
 
@@ -519,20 +519,20 @@ extension Snapshotting where Value == String, Format == String {
         }
       }
 
-      var expectedLine = 0
-      var actualLine = 0
+      var oldLine = 0
+      var newLine = 0
 
-      while expectedLine < expectedLines.count || actualLine < actualLines.count {
-        if let removal = removals[expectedLine] {
-          result += "\(expectedPrefix) \(removal)\n"
-          expectedLine += 1
-        } else if let insertion = insertions[actualLine] {
-          result += "\(actualPrefix) \(insertion)\n"
-          actualLine += 1
+      while oldLine < oldLines.count || newLine < newLines.count {
+        if let removal = removals[oldLine] {
+          result += "\(oldPrefix) \(removal)\n"
+          oldLine += 1
+        } else if let insertion = insertions[newLine] {
+          result += "\(newPrefix) \(insertion)\n"
+          newLine += 1
         } else {
-          result += "\(prefix) \(expectedLines[expectedLine])\n"
-          expectedLine += 1
-          actualLine += 1
+          result += "\(prefix) \(oldLines[oldLine])\n"
+          oldLine += 1
+          newLine += 1
         }
       }
 
@@ -644,6 +644,6 @@ private class FixItApplier: SyntaxRewriter {
   }
 }
 
-private let expectedPrefix = "\u{2212}"
-private let actualPrefix = "+"
+private let oldPrefix = "\u{2212}"
+private let newPrefix = "+"
 private let prefix = "\u{2007}"
