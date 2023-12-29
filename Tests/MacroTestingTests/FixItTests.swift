@@ -52,7 +52,7 @@ final class FixItTests: BaseTestCase {
     }
   }
 
-  func testReplaceFirstMember_IncorrectlyReplacesParent() {
+  func testReplaceFirstMember() {
     assertMacro {
       """
       @ReplaceFirstMember
@@ -79,12 +79,16 @@ final class FixItTests: BaseTestCase {
       @ReplaceFirstMember
       struct FooBar {
         let oye: Oye
+        let bar: Bar
+        let baz: Baz
       }
       """
     } expansion: {
       """
       struct FooBar {
         let oye: Oye
+        let bar: Bar
+        let baz: Baz
       }
       """
     }

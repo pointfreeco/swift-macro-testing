@@ -250,10 +250,16 @@ public func assertMacro(
     if !allDiagnostics.isEmpty && allDiagnostics.allSatisfy({ !$0.fixIts.isEmpty }) {
       offset += 1
 
+      let edits =
+        context.diagnostics
+        .flatMap(\.fixIts)
+        .flatMap { $0.changes }
+        .map { $0.edit(in: context) }
+
       var fixedSourceFile = origSourceFile
       fixedSourceFile = Parser.parse(
-        source: FixItApplier.applyFixes(
-          context: context, in: allDiagnostics.map(anchor), to: origSourceFile
+        source: FixItApplier.apply(
+          edits: edits, to: origSourceFile
         )
         .description
       )
@@ -340,6 +346,57 @@ public func assertMacro(
     }
   } catch {
     XCTFail("Threw error: \(error)", file: file, line: line)
+  }
+}
+
+// From: https://github.com/apple/swift-syntax/blob/d647052/Sources/SwiftSyntaxMacrosTestSupport/Assertions.swift
+extension FixIt.Change {
+  /// Returns the edit for this change, translating positions from detached nodes
+  /// to the corresponding locations in the original source file based on
+  /// `expansionContext`.
+  ///
+  /// - SeeAlso: `FixIt.Change.edit`
+  fileprivate func edit(in expansionContext: BasicMacroExpansionContext) -> SourceEdit {
+    switch self {
+    case .replace(let oldNode, let newNode):
+      let start = expansionContext.position(of: oldNode.position, anchoredAt: oldNode)
+      let end = expansionContext.position(of: oldNode.endPosition, anchoredAt: oldNode)
+      return SourceEdit(
+        range: start..<end,
+        replacement: newNode.description
+      )
+
+    case .replaceLeadingTrivia(let token, let newTrivia):
+      let start = expansionContext.position(of: token.position, anchoredAt: token)
+      let end = expansionContext.position(
+        of: token.positionAfterSkippingLeadingTrivia, anchoredAt: token)
+      return SourceEdit(
+        range: start..<end,
+        replacement: newTrivia.description
+      )
+
+    case .replaceTrailingTrivia(let token, let newTrivia):
+      let start = expansionContext.position(
+        of: token.endPositionBeforeTrailingTrivia, anchoredAt: token)
+      let end = expansionContext.position(of: token.endPosition, anchoredAt: token)
+      return SourceEdit(
+        range: start..<end,
+        replacement: newTrivia.description
+      )
+    }
+  }
+}
+
+// From: https://github.com/apple/swift-syntax/blob/d647052/Sources/SwiftSyntaxMacrosTestSupport/Assertions.swift
+extension BasicMacroExpansionContext {
+  /// Translates a position from a detached node to the corresponding position
+  /// in the original source file.
+  fileprivate func position(
+    of position: AbsolutePosition,
+    anchoredAt node: some SyntaxProtocol
+  ) -> AbsolutePosition {
+    let location = self.location(for: position, anchoredAt: Syntax(node), fileName: "")
+    return AbsolutePosition(utf8Offset: location.offset)
   }
 }
 
@@ -616,69 +673,6 @@ extension Dictionary where Key == String, Value == Macro.Type {
       },
       uniquingKeysWith: { _, rhs in rhs }
     )
-  }
-}
-
-private class FixItApplier: SyntaxRewriter {
-  let context: BasicMacroExpansionContext
-  let diagnostics: [Diagnostic]
-
-  init(context: BasicMacroExpansionContext, diagnostics: [Diagnostic]) {
-    self.context = context
-    self.diagnostics = diagnostics
-    super.init(viewMode: .all)
-  }
-
-  public override func visitAny(_ node: Syntax) -> Syntax? {
-    for diagnostic in diagnostics {
-      for fixIts in diagnostic.fixIts {
-        for change in fixIts.changes {
-          switch change {
-          case .replace(let oldNode, let newNode):
-            let offset =
-              context
-              .location(for: oldNode.position, anchoredAt: oldNode, fileName: "")
-              .offset
-            if node.position.utf8Offset == offset {
-              return newNode
-            }
-          default:
-            break
-          }
-        }
-      }
-    }
-    return nil
-  }
-
-  override func visit(_ node: TokenSyntax) -> TokenSyntax {
-    var modifiedNode = node
-    for diagnostic in diagnostics {
-      for fixIts in diagnostic.fixIts {
-        for change in fixIts.changes {
-          switch change {
-          case .replaceLeadingTrivia(token: let changedNode, let newTrivia)
-          where changedNode.id == node.id:
-            modifiedNode = node.with(\.leadingTrivia, newTrivia)
-          case .replaceTrailingTrivia(token: let changedNode, let newTrivia)
-          where changedNode.id == node.id:
-            modifiedNode = node.with(\.trailingTrivia, newTrivia)
-          default:
-            break
-          }
-        }
-      }
-    }
-    return modifiedNode
-  }
-
-  public static func applyFixes(
-    context: BasicMacroExpansionContext,
-    in diagnostics: [Diagnostic],
-    to tree: some SyntaxProtocol
-  ) -> Syntax {
-    let applier = FixItApplier(context: context, diagnostics: diagnostics)
-    return applier.rewrite(tree)
   }
 }
 
