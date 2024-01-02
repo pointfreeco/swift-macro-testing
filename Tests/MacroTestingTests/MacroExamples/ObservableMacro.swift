@@ -13,8 +13,8 @@
 import SwiftSyntax
 import SwiftSyntaxMacros
 
-private extension DeclSyntaxProtocol {
-  var isObservableStoredProperty: Bool {
+extension DeclSyntaxProtocol {
+  fileprivate var isObservableStoredProperty: Bool {
     if let property = self.as(VariableDeclSyntax.self),
       let binding = property.bindings.first,
       let identifier = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier,

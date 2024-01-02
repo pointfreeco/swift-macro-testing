@@ -6,7 +6,7 @@ final class ObservableMacroTests: XCTestCase {
     withMacroTesting(
       macros: [
         "Observable": ObservableMacro.self,
-        "ObservableProperty": ObservablePropertyMacro.self
+        "ObservableProperty": ObservablePropertyMacro.self,
       ]
     ) {
       super.invokeTest()

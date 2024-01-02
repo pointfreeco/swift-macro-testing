@@ -22,7 +22,8 @@ import SwiftSyntaxMacros
 public enum DefaultFatalErrorImplementationMacro: ExtensionMacro {
 
   /// Unique identifier for messages related to this macro.
-  private static let messageID = MessageID(domain: "MacroExamples", id: "ProtocolDefaultImplementation")
+  private static let messageID = MessageID(
+    domain: "MacroExamples", id: "ProtocolDefaultImplementation")
 
   /// Generates extension for the protocol to which this macro is attached.
   public static func expansion(
