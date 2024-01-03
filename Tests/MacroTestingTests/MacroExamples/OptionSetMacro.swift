@@ -156,7 +156,7 @@ extension OptionSetMacro: ExtensionMacro {
     // If there is an explicit conformance to OptionSet already, don't add one.
     if let inheritedTypes = structDecl.inheritanceClause?.inheritedTypes,
       inheritedTypes.contains(where: { inherited in inherited.type.trimmedDescription == "OptionSet"
-        })
+      })
     {
       return []
     }
