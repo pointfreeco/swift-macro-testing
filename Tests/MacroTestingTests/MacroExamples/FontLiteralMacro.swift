@@ -22,7 +22,7 @@ public enum FontLiteralMacro: ExpressionMacro {
     in context: some MacroExpansionContext
   ) throws -> ExprSyntax {
     let argList = replaceFirstLabel(
-      of: node.argumentList,
+      of: node.arguments,
       with: "fontLiteralName"
     )
     return ".init(\(argList))"
