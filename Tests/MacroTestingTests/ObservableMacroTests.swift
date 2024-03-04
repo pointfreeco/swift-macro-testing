@@ -70,7 +70,7 @@ final class ObservableMacroTests: XCTestCase {
           }
         }
 
-        var isHappy: Bool = true {
+        var isHappy: Bool {
           get {
             _registrar.beginAccess(\.isHappy)
             defer {

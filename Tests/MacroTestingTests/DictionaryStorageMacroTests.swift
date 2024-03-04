@@ -25,7 +25,7 @@ final class DictionaryStorageMacroTests: BaseTestCase {
     } expansion: {
       """
       struct Point {
-        var x: Int = 1 {
+        var x: Int {
           get {
             _storage["x", default: 1] as! Int
           }
@@ -33,7 +33,7 @@ final class DictionaryStorageMacroTests: BaseTestCase {
             _storage["x"] = newValue
           }
         }
-        var y: Int = 2 {
+        var y: Int {
           get {
             _storage["y", default: 2] as! Int
           }
