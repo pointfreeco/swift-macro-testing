@@ -18,7 +18,7 @@ let package = Package(
   ],
   dependencies: [
     .package(url: "https://github.com/apple/swift-syntax", "509.0.0"..<"511.0.0"),
-    .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", branch: "inline-snapshot-removal"),
+    .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", from: "1.16.0"),
   ],
   targets: [
     .target(
