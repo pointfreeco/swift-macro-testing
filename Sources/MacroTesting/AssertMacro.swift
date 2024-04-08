@@ -235,13 +235,21 @@ public func assertMacro(
       )
     } else if diagnosedSource != nil {
       offset += 1
-      InlineSnapshotSyntaxDescriptor(
-        trailingClosureLabel: "diagnostics",
-        trailingClosureOffset: offset
-      )
-      .fail(
-        "Expected diagnostics, but there were none",
+      assertInlineSnapshot(
+        of: nil,
+        as: ._lines,
+        message: """
+          Diagnostic output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
+          Difference: …
+          """,
+        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+          deprecatedTrailingClosureLabels: ["matches"],
+          trailingClosureLabel: "diagnostics",
+          trailingClosureOffset: offset
+        ),
+        matches: diagnosedSource,
         file: file,
+        function: function,
         line: line,
         column: column
       )
@@ -299,13 +307,20 @@ public func assertMacro(
       )
     } else if fixedSource != nil {
       offset += 1
-      InlineSnapshotSyntaxDescriptor(
-        trailingClosureLabel: "fixes",
-        trailingClosureOffset: offset
-      )
-      .fail(
-        "Expected fix-its, but there were none",
+      assertInlineSnapshot(
+        of: nil,
+        as: ._lines,
+        message: """
+          Fixed output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
+          Difference: …
+          """,
+        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+          trailingClosureLabel: "fixes",
+          trailingClosureOffset: offset
+        ),
+        matches: fixedSource,
         file: file,
+        function: function,
         line: line,
         column: column
       )
@@ -333,13 +348,21 @@ public func assertMacro(
       )
     } else if expandedSource != nil {
       offset += 1
-      InlineSnapshotSyntaxDescriptor(
-        trailingClosureLabel: "expansion",
-        trailingClosureOffset: offset
-      )
-      .fail(
-        "Expected macro expansion, but there was none",
+      assertInlineSnapshot(
+        of: nil,
+        as: ._lines,
+        message: """
+          Expanded output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
+          Difference: …
+          """,
+        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+          deprecatedTrailingClosureLabels: ["matches"],
+          trailingClosureLabel: "expansion",
+          trailingClosureOffset: offset
+        ),
+        matches: expandedSource,
         file: file,
+        function: function,
         line: line,
         column: column
       )
