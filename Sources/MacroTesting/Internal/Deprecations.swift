@@ -22,7 +22,7 @@ public func assertMacro(
   column: UInt = #column
 ) {
   guard isRecording ?? MacroTestingConfiguration.current.isRecording else {
-    XCTFail("Re-record this assertion", file: file, line: line)
+    recordIssue("Re-record this assertion", file: file, line: line)
     return
   }
   assertMacro(
@@ -73,7 +73,7 @@ public func assertMacro(
   line: UInt = #line,
   column: UInt = #column
 ) {
-  XCTFail("Delete 'matches' and re-record this assertion", file: file, line: line)
+  recordIssue("Delete 'matches' and re-record this assertion", file: file, line: line)
 }
 
 @available(

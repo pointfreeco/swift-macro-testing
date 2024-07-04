@@ -1,4 +1,5 @@
 import InlineSnapshotTesting
+@_spi(Internals) import SnapshotTesting
 import SwiftDiagnostics
 import SwiftOperators
 import SwiftParser
@@ -112,7 +113,7 @@ import XCTest
 public func assertMacro(
   _ macros: [String: Macro.Type]? = nil,
   indentationWidth: Trivia? = nil,
-  record isRecording: Bool? = nil,
+  record: SnapshotTestingConfiguration.Record? = nil,
   of originalSource: () throws -> String,
   diagnostics diagnosedSource: (() -> String)? = nil,
   fixes fixedSource: (() -> String)? = nil,
@@ -122,269 +123,266 @@ public func assertMacro(
   line: UInt = #line,
   column: UInt = #column
 ) {
-  let macros = macros ?? MacroTestingConfiguration.current.macros
-  guard !macros.isEmpty else {
-    XCTFail(
-      """
-      No macros configured for this assertion. Pass a mapping to this function, e.g.:
+  withSnapshotTesting(record: record) {
+    let macros = macros ?? MacroTestingConfiguration.current.macros
+    guard !macros.isEmpty else {
+      recordIssue(
+        """
+        No macros configured for this assertion. Pass a mapping to this function, e.g.:
 
-          assertMacro(["stringify": StringifyMacro.self]) { … }
+            assertMacro(["stringify": StringifyMacro.self]) { … }
 
-      Or wrap your assertion using 'withMacroTesting', e.g. in 'invokeTest':
+        Or wrap your assertion using 'withMacroTesting', e.g. in 'invokeTest':
 
-          class StringifyMacroTests: XCTestCase {
-            override func invokeTest() {
-              withMacroTesting(macros: ["stringify": StringifyMacro.self]) {
-                super.invokeTest()
+            class StringifyMacroTests: XCTestCase {
+              override func invokeTest() {
+                withMacroTesting(macros: ["stringify": StringifyMacro.self]) {
+                  super.invokeTest()
+                }
               }
+              …
             }
-            …
-          }
-      """,
-      file: file,
-      line: line
-    )
-    return
-  }
-
-  let wasRecording = SnapshotTesting.isRecording
-  SnapshotTesting.isRecording = isRecording ?? MacroTestingConfiguration.current.isRecording
-  defer { SnapshotTesting.isRecording = wasRecording }
-
-  do {
-    var origSourceFile = Parser.parse(source: try originalSource())
-    if let foldedSourceFile = try OperatorTable.standardOperators.foldAll(origSourceFile).as(
-      SourceFileSyntax.self
-    ) {
-      origSourceFile = foldedSourceFile
-    }
-
-    let origDiagnostics = ParseDiagnosticsGenerator.diagnostics(for: origSourceFile)
-    let indentationWidth =
-      indentationWidth
-      ?? MacroTestingConfiguration.current.indentationWidth
-      ?? Trivia(
-        stringLiteral: String(
-          SourceLocationConverter(fileName: "-", tree: origSourceFile).sourceLines
-            .first(where: { $0.first?.isWhitespace == true && $0 != "\n" })?
-            .prefix(while: { $0.isWhitespace })
-            ?? "    "
-        )
-      )
-
-    var context = BasicMacroExpansionContext(
-      sourceFiles: [
-        origSourceFile: .init(moduleName: "TestModule", fullFilePath: "Test.swift")
-      ]
-    )
-    #if canImport(SwiftSyntax600)
-      var expandedSourceFile = origSourceFile.expand(
-        macros: macros,
-        contextGenerator: { _ in context },
-        indentationWidth: indentationWidth
-      )
-    #else
-      var expandedSourceFile = origSourceFile.expand(
-        macros: macros,
-        in: context,
-        indentationWidth: indentationWidth
-      )
-    #endif
-
-    var offset = 0
-
-    func anchor(_ diag: Diagnostic) -> Diagnostic {
-      let location = context.location(for: diag.position, anchoredAt: diag.node, fileName: "")
-      return Diagnostic(
-        node: diag.node,
-        position: AbsolutePosition(utf8Offset: location.offset),
-        message: diag.diagMessage,
-        highlights: diag.highlights,
-        notes: diag.notes,
-        fixIts: diag.fixIts
-      )
-    }
-
-    var allDiagnostics: [Diagnostic] { origDiagnostics + context.diagnostics }
-    if !allDiagnostics.isEmpty || diagnosedSource != nil {
-      offset += 1
-
-      let converter = SourceLocationConverter(fileName: "-", tree: origSourceFile)
-      let lineCount = converter.location(for: origSourceFile.endPosition).line
-      let diagnostics =
-        DiagnosticsFormatter
-        .annotatedSource(
-          tree: origSourceFile,
-          diags: allDiagnostics.map(anchor),
-          context: context,
-          contextSize: lineCount
-        )
-        .description
-        .replacingOccurrences(of: #"(^|\n) *\d* +│ "#, with: "$1", options: .regularExpression)
-        .trimmingCharacters(in: .newlines)
-
-      assertInlineSnapshot(
-        of: diagnostics,
-        as: ._lines,
-        message: """
-          Diagnostic output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
-          Difference: …
-          """,
-        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
-          deprecatedTrailingClosureLabels: ["matches"],
-          trailingClosureLabel: "diagnostics",
-          trailingClosureOffset: offset
-        ),
-        matches: diagnosedSource,
+        """,
         file: file,
-        function: function,
-        line: line,
-        column: column
+        line: line
       )
-    } else if diagnosedSource != nil {
-      offset += 1
-      assertInlineSnapshot(
-        of: nil,
-        as: ._lines,
-        message: """
-          Diagnostic output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
-          Difference: …
-          """,
-        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
-          deprecatedTrailingClosureLabels: ["matches"],
-          trailingClosureLabel: "diagnostics",
-          trailingClosureOffset: offset
-        ),
-        matches: diagnosedSource,
-        file: file,
-        function: function,
-        line: line,
-        column: column
-      )
+      return
     }
-
-    if !allDiagnostics.isEmpty && allDiagnostics.allSatisfy({ !$0.fixIts.isEmpty }) {
-      offset += 1
-
-      let edits =
-        context.diagnostics
-        .flatMap(\.fixIts)
-        .flatMap { $0.changes }
-        .map { $0.edit(in: context) }
-
-      var fixedSourceFile = origSourceFile
-      fixedSourceFile = Parser.parse(
-        source: FixItApplier.apply(
-          edits: edits, to: origSourceFile
-        )
-        .description
-      )
-      if let foldedSourceFile = try OperatorTable.standardOperators.foldAll(fixedSourceFile).as(
+    do {
+      var origSourceFile = Parser.parse(source: try originalSource())
+      if let foldedSourceFile = try OperatorTable.standardOperators.foldAll(origSourceFile).as(
         SourceFileSyntax.self
       ) {
-        fixedSourceFile = foldedSourceFile
+        origSourceFile = foldedSourceFile
       }
 
-      assertInlineSnapshot(
-        of: fixedSourceFile.description.trimmingCharacters(in: .newlines),
-        as: ._lines,
-        message: """
-          Fixed output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
-          Difference: …
-          """,
-        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
-          trailingClosureLabel: "fixes",
-          trailingClosureOffset: offset
-        ),
-        matches: fixedSource,
-        file: file,
-        function: function,
-        line: line,
-        column: column
-      )
+      let origDiagnostics = ParseDiagnosticsGenerator.diagnostics(for: origSourceFile)
+      let indentationWidth =
+        indentationWidth
+        ?? MacroTestingConfiguration.current.indentationWidth
+        ?? Trivia(
+          stringLiteral: String(
+            SourceLocationConverter(fileName: "-", tree: origSourceFile).sourceLines
+              .first(where: { $0.first?.isWhitespace == true && $0 != "\n" })?
+              .prefix(while: { $0.isWhitespace })
+              ?? "    "
+          )
+        )
 
-      context = BasicMacroExpansionContext(
+      var context = BasicMacroExpansionContext(
         sourceFiles: [
-          fixedSourceFile: .init(moduleName: "TestModule", fullFilePath: "Test.swift")
+          origSourceFile: .init(moduleName: "TestModule", fullFilePath: "Test.swift")
         ]
       )
       #if canImport(SwiftSyntax600)
-        expandedSourceFile = fixedSourceFile.expand(
+        var expandedSourceFile = origSourceFile.expand(
           macros: macros,
           contextGenerator: { _ in context },
           indentationWidth: indentationWidth
         )
       #else
-        expandedSourceFile = fixedSourceFile.expand(
+        var expandedSourceFile = origSourceFile.expand(
           macros: macros,
           in: context,
           indentationWidth: indentationWidth
         )
       #endif
-    } else if fixedSource != nil {
-      offset += 1
-      assertInlineSnapshot(
-        of: nil,
-        as: ._lines,
-        message: """
-          Fixed output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
-          Difference: …
-          """,
-        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
-          trailingClosureLabel: "fixes",
-          trailingClosureOffset: offset
-        ),
-        matches: fixedSource,
-        file: file,
-        function: function,
-        line: line,
-        column: column
-      )
-    }
 
-    if allDiagnostics.filter({ $0.diagMessage.severity == .error }).isEmpty {
-      offset += 1
-      assertInlineSnapshot(
-        of: expandedSourceFile.description.trimmingCharacters(in: .newlines),
-        as: ._lines,
-        message: """
-          Expanded output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
-          Difference: …
-          """,
-        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
-          deprecatedTrailingClosureLabels: ["matches"],
-          trailingClosureLabel: "expansion",
-          trailingClosureOffset: offset
-        ),
-        matches: expandedSource,
-        file: file,
-        function: function,
-        line: line,
-        column: column
-      )
-    } else if expandedSource != nil {
-      offset += 1
-      assertInlineSnapshot(
-        of: nil,
-        as: ._lines,
-        message: """
-          Expanded output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
-          Difference: …
-          """,
-        syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
-          deprecatedTrailingClosureLabels: ["matches"],
-          trailingClosureLabel: "expansion",
-          trailingClosureOffset: offset
-        ),
-        matches: expandedSource,
-        file: file,
-        function: function,
-        line: line,
-        column: column
-      )
+      var offset = 0
+
+      func anchor(_ diag: Diagnostic) -> Diagnostic {
+        let location = context.location(for: diag.position, anchoredAt: diag.node, fileName: "")
+        return Diagnostic(
+          node: diag.node,
+          position: AbsolutePosition(utf8Offset: location.offset),
+          message: diag.diagMessage,
+          highlights: diag.highlights,
+          notes: diag.notes,
+          fixIts: diag.fixIts
+        )
+      }
+
+      var allDiagnostics: [Diagnostic] { origDiagnostics + context.diagnostics }
+      if !allDiagnostics.isEmpty || diagnosedSource != nil {
+        offset += 1
+
+        let converter = SourceLocationConverter(fileName: "-", tree: origSourceFile)
+        let lineCount = converter.location(for: origSourceFile.endPosition).line
+        let diagnostics =
+          DiagnosticsFormatter
+          .annotatedSource(
+            tree: origSourceFile,
+            diags: allDiagnostics.map(anchor),
+            context: context,
+            contextSize: lineCount
+          )
+          .description
+          .replacingOccurrences(of: #"(^|\n) *\d* +│ "#, with: "$1", options: .regularExpression)
+          .trimmingCharacters(in: .newlines)
+
+        assertInlineSnapshot(
+          of: diagnostics,
+          as: ._lines,
+          message: """
+            Diagnostic output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
+            Difference: …
+            """,
+          syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+            deprecatedTrailingClosureLabels: ["matches"],
+            trailingClosureLabel: "diagnostics",
+            trailingClosureOffset: offset
+          ),
+          matches: diagnosedSource,
+          file: file,
+          function: function,
+          line: line,
+          column: column
+        )
+      } else if diagnosedSource != nil {
+        offset += 1
+        assertInlineSnapshot(
+          of: nil,
+          as: ._lines,
+          message: """
+            Diagnostic output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
+            Difference: …
+            """,
+          syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+            deprecatedTrailingClosureLabels: ["matches"],
+            trailingClosureLabel: "diagnostics",
+            trailingClosureOffset: offset
+          ),
+          matches: diagnosedSource,
+          file: file,
+          function: function,
+          line: line,
+          column: column
+        )
+      }
+
+      if !allDiagnostics.isEmpty && allDiagnostics.allSatisfy({ !$0.fixIts.isEmpty }) {
+        offset += 1
+
+        let edits =
+          context.diagnostics
+          .flatMap(\.fixIts)
+          .flatMap { $0.changes }
+          .map { $0.edit(in: context) }
+
+        var fixedSourceFile = origSourceFile
+        fixedSourceFile = Parser.parse(
+          source: FixItApplier.apply(
+            edits: edits, to: origSourceFile
+          )
+          .description
+        )
+        if let foldedSourceFile = try OperatorTable.standardOperators.foldAll(fixedSourceFile).as(
+          SourceFileSyntax.self
+        ) {
+          fixedSourceFile = foldedSourceFile
+        }
+
+        assertInlineSnapshot(
+          of: fixedSourceFile.description.trimmingCharacters(in: .newlines),
+          as: ._lines,
+          message: """
+            Fixed output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
+            Difference: …
+            """,
+          syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+            trailingClosureLabel: "fixes",
+            trailingClosureOffset: offset
+          ),
+          matches: fixedSource,
+          file: file,
+          function: function,
+          line: line,
+          column: column
+        )
+
+        context = BasicMacroExpansionContext(
+          sourceFiles: [
+            fixedSourceFile: .init(moduleName: "TestModule", fullFilePath: "Test.swift")
+          ]
+        )
+        #if canImport(SwiftSyntax600)
+          expandedSourceFile = fixedSourceFile.expand(
+            macros: macros,
+            contextGenerator: { _ in context },
+            indentationWidth: indentationWidth
+          )
+        #else
+          expandedSourceFile = fixedSourceFile.expand(
+            macros: macros,
+            in: context,
+            indentationWidth: indentationWidth
+          )
+        #endif
+      } else if fixedSource != nil {
+        offset += 1
+        assertInlineSnapshot(
+          of: nil,
+          as: ._lines,
+          message: """
+            Fixed output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
+            Difference: …
+            """,
+          syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+            trailingClosureLabel: "fixes",
+            trailingClosureOffset: offset
+          ),
+          matches: fixedSource,
+          file: file,
+          function: function,
+          line: line,
+          column: column
+        )
+      }
+
+      if allDiagnostics.filter({ $0.diagMessage.severity == .error }).isEmpty {
+        offset += 1
+        assertInlineSnapshot(
+          of: expandedSourceFile.description.trimmingCharacters(in: .newlines),
+          as: ._lines,
+          message: """
+            Expanded output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
+            Difference: …
+            """,
+          syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+            deprecatedTrailingClosureLabels: ["matches"],
+            trailingClosureLabel: "expansion",
+            trailingClosureOffset: offset
+          ),
+          matches: expandedSource,
+          file: file,
+          function: function,
+          line: line,
+          column: column
+        )
+      } else if expandedSource != nil {
+        offset += 1
+        assertInlineSnapshot(
+          of: nil,
+          as: ._lines,
+          message: """
+            Expanded output (\(newPrefix)) differed from expected output (\(oldPrefix)). \
+            Difference: …
+            """,
+          syntaxDescriptor: InlineSnapshotSyntaxDescriptor(
+            deprecatedTrailingClosureLabels: ["matches"],
+            trailingClosureLabel: "expansion",
+            trailingClosureOffset: offset
+          ),
+          matches: expandedSource,
+          file: file,
+          function: function,
+          line: line,
+          column: column
+        )
+      }
+    } catch {
+      recordIssue("Threw error: \(error)", file: file, line: line)
     }
-  } catch {
-    XCTFail("Threw error: \(error)", file: file, line: line)
   }
 }
 
@@ -467,7 +465,7 @@ extension BasicMacroExpansionContext {
 public func assertMacro(
   _ macros: [Macro.Type],
   indentationWidth: Trivia? = nil,
-  record isRecording: Bool? = nil,
+  record: SnapshotTestingConfiguration.Record? = nil,
   of originalSource: () throws -> String,
   diagnostics diagnosedSource: (() -> String)? = nil,
   fixes fixedSource: (() -> String)? = nil,
@@ -480,7 +478,7 @@ public func assertMacro(
   assertMacro(
     Dictionary(macros: macros),
     indentationWidth: indentationWidth,
-    record: isRecording,
+    record: record,
     of: originalSource,
     diagnostics: diagnosedSource,
     fixes: fixedSource,
