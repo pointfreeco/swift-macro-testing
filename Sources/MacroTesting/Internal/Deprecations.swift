@@ -8,6 +8,91 @@ import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
 import XCTest
 
+// MARK: Deprecated after 0.4.2
+
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(macOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(visionOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(watchOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@_disfavoredOverload
+public func withMacroTesting<R>(
+  indentationWidth: Trivia? = nil,
+  isRecording: Bool? = nil,
+  macros: [String: Macro.Type]? = nil,
+  operation: () async throws -> R
+) async rethrows {
+  var configuration = MacroTestingConfiguration.current
+  if let indentationWidth { configuration.indentationWidth = indentationWidth }
+  if let isRecording { configuration.record = isRecording ? .all : .missing }
+  if let macros { configuration.macros = macros }
+  try await MacroTestingConfiguration.$current.withValue(configuration) {
+    try await operation()
+  }
+}
+
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(macOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(visionOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(watchOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@_disfavoredOverload
+public func withMacroTesting<R>(
+  indentationWidth: Trivia? = nil,
+  isRecording: Bool? = nil,
+  macros: [String: Macro.Type]? = nil,
+  operation: () throws -> R
+) rethrows {
+  var configuration = MacroTestingConfiguration.current
+  if let indentationWidth { configuration.indentationWidth = indentationWidth }
+  if let isRecording { configuration.record = isRecording ? .all : .missing }
+  if let macros { configuration.macros = macros }
+  try MacroTestingConfiguration.$current.withValue(configuration) {
+    try operation()
+  }
+}
+
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(macOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(visionOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(watchOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@_disfavoredOverload
+public func withMacroTesting<R>(
+  indentationWidth: Trivia? = nil,
+  isRecording: Bool? = nil,
+  macros: [Macro.Type],
+  operation: () async throws -> R
+) async rethrows {
+  try await withMacroTesting(
+    indentationWidth: indentationWidth,
+    isRecording: isRecording,
+    macros: Dictionary(macros: macros),
+    operation: operation
+  )
+}
+
+
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(macOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(visionOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(watchOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@_disfavoredOverload
+public func withMacroTesting<R>(
+  indentationWidth: Trivia? = nil,
+  isRecording: Bool? = nil,
+  macros: [Macro.Type],
+  operation: () throws -> R
+) rethrows {
+  try withMacroTesting(
+    indentationWidth: indentationWidth,
+    isRecording: isRecording,
+    macros: Dictionary(macros: macros),
+    operation: operation
+  )
+}
+
 // MARK: Deprecated after 0.1.0
 
 @available(*, deprecated, message: "Re-record this assertion")
@@ -21,7 +106,7 @@ public func assertMacro(
   line: UInt = #line,
   column: UInt = #column
 ) {
-  guard isRecording ?? MacroTestingConfiguration.current.isRecording else {
+  guard isRecording ?? (MacroTestingConfiguration.current.record == .all) else {
     recordIssue("Re-record this assertion", file: file, line: line)
     return
   }

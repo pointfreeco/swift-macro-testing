@@ -530,14 +530,14 @@ public func assertMacro(
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
-  isRecording: Bool? = nil,
+  record: SnapshotTestingConfiguration.Record? = nil,
   macros: [String: Macro.Type]? = nil,
   operation: () async throws -> R
 ) async rethrows {
   var configuration = MacroTestingConfiguration.current
-  if let indentationWidth = indentationWidth { configuration.indentationWidth = indentationWidth }
-  if let isRecording = isRecording { configuration.isRecording = isRecording }
-  if let macros = macros { configuration.macros = macros }
+  if let indentationWidth { configuration.indentationWidth = indentationWidth }
+  if let record { configuration.record = record }
+  if let macros { configuration.macros = macros }
   try await MacroTestingConfiguration.$current.withValue(configuration) {
     try await operation()
   }
@@ -557,14 +557,14 @@ public func withMacroTesting<R>(
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
-  isRecording: Bool? = nil,
+  record: SnapshotTestingConfiguration.Record? = nil,
   macros: [String: Macro.Type]? = nil,
   operation: () throws -> R
 ) rethrows {
   var configuration = MacroTestingConfiguration.current
-  if let indentationWidth = indentationWidth { configuration.indentationWidth = indentationWidth }
-  if let isRecording = isRecording { configuration.isRecording = isRecording }
-  if let macros = macros { configuration.macros = macros }
+  if let indentationWidth { configuration.indentationWidth = indentationWidth }
+  if let record { configuration.record = record }
+  if let macros { configuration.macros = macros }
   try MacroTestingConfiguration.$current.withValue(configuration) {
     try operation()
   }
@@ -584,13 +584,13 @@ public func withMacroTesting<R>(
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
-  isRecording: Bool? = nil,
+  record: SnapshotTestingConfiguration.Record? = nil,
   macros: [Macro.Type],
   operation: () async throws -> R
 ) async rethrows {
   try await withMacroTesting(
     indentationWidth: indentationWidth,
-    isRecording: isRecording,
+    record: record,
     macros: Dictionary(macros: macros),
     operation: operation
   )
@@ -610,13 +610,13 @@ public func withMacroTesting<R>(
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
-  isRecording: Bool? = nil,
+  record: SnapshotTestingConfiguration.Record? = nil,
   macros: [Macro.Type],
   operation: () throws -> R
 ) rethrows {
   try withMacroTesting(
     indentationWidth: indentationWidth,
-    isRecording: isRecording,
+    record: record,
     macros: Dictionary(macros: macros),
     operation: operation
   )
@@ -694,7 +694,7 @@ struct MacroTestingConfiguration {
   @TaskLocal static var current = Self()
 
   var indentationWidth: Trivia? = nil
-  var isRecording = false
+  var record = SnapshotTestingConfiguration.Record.missing
   var macros: [String: Macro.Type] = [:]
 }
 
