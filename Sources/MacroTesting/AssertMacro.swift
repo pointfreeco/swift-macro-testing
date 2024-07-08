@@ -533,12 +533,14 @@ public func withMacroTesting<R>(
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [String: Macro.Type]? = nil,
   operation: () async throws -> R
-) async rethrows {
+) async rethrows -> R {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
   if let macros { configuration.macros = macros }
-  try await MacroTestingConfiguration.$current.withValue(configuration) {
-    try await operation()
+  return try await withSnapshotTesting(record: record) {
+    try await MacroTestingConfiguration.$current.withValue(configuration) {
+      try await operation()
+    }
   }
 }
 
@@ -559,11 +561,11 @@ public func withMacroTesting<R>(
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [String: Macro.Type]? = nil,
   operation: () throws -> R
-) rethrows {
+) rethrows -> R {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
   if let macros { configuration.macros = macros }
-  _ = try withSnapshotTesting(record: record) {
+  return try withSnapshotTesting(record: record) {
     try MacroTestingConfiguration.$current.withValue(configuration) {
       try operation()
     }
@@ -587,7 +589,7 @@ public func withMacroTesting<R>(
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [Macro.Type],
   operation: () async throws -> R
-) async rethrows {
+) async rethrows -> R {
   try await withMacroTesting(
     indentationWidth: indentationWidth,
     record: record,
@@ -613,7 +615,7 @@ public func withMacroTesting<R>(
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [Macro.Type],
   operation: () throws -> R
-) rethrows {
+) rethrows -> R {
   try withMacroTesting(
     indentationWidth: indentationWidth,
     record: record,
