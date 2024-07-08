@@ -123,9 +123,9 @@ public func assertMacro(
   line: UInt = #line,
   column: UInt = #column
 ) {
-  withSnapshotTesting(record: record) {
+  withSnapshotTesting(record: record ?? SnapshotTestingConfiguration.current?.record) {
     let macros = macros ?? MacroTestingConfiguration.current.macros
-    guard !macros.isEmpty else {
+    guard let macros, !macros.isEmpty else {
       recordIssue(
         """
         No macros configured for this assertion. Pass a mapping to this function, e.g.:
@@ -536,7 +536,6 @@ public func withMacroTesting<R>(
 ) async rethrows {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
-  if let record { configuration.record = record }
   if let macros { configuration.macros = macros }
   try await MacroTestingConfiguration.$current.withValue(configuration) {
     try await operation()
@@ -563,7 +562,6 @@ public func withMacroTesting<R>(
 ) rethrows {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
-  if let record { configuration.record = record }
   if let macros { configuration.macros = macros }
   try MacroTestingConfiguration.$current.withValue(configuration) {
     try operation()
@@ -694,8 +692,7 @@ struct MacroTestingConfiguration {
   @TaskLocal static var current = Self()
 
   var indentationWidth: Trivia? = nil
-  var record = SnapshotTestingConfiguration.Record.missing
-  var macros: [String: Macro.Type] = [:]
+  var macros: [String: Macro.Type]?
 }
 
 extension Dictionary where Key == String, Value == Macro.Type {

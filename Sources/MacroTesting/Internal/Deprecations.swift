@@ -1,4 +1,5 @@
 import InlineSnapshotTesting
+@_spi(Internals) import SnapshotTesting
 import SwiftDiagnostics
 import SwiftOperators
 import SwiftParser
@@ -24,10 +25,12 @@ public func withMacroTesting<R>(
 ) async rethrows {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
-  if let isRecording { configuration.record = isRecording ? .all : .missing }
+  let record: SnapshotTestingConfiguration.Record? = isRecording.map { $0 ? .all : .missing }
   if let macros { configuration.macros = macros }
-  try await MacroTestingConfiguration.$current.withValue(configuration) {
-    try await operation()
+  _ = try await withSnapshotTesting(record: record) {
+    try await MacroTestingConfiguration.$current.withValue(configuration) {
+      try await operation()
+    }
   }
 }
 
@@ -45,10 +48,12 @@ public func withMacroTesting<R>(
 ) rethrows {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
-  if let isRecording { configuration.record = isRecording ? .all : .missing }
+  let record: SnapshotTestingConfiguration.Record? = isRecording.map { $0 ? .all : .missing }
   if let macros { configuration.macros = macros }
-  try MacroTestingConfiguration.$current.withValue(configuration) {
-    try operation()
+  _ = try withSnapshotTesting(record: record) {
+    try MacroTestingConfiguration.$current.withValue(configuration) {
+      try operation()
+    }
   }
 }
 
@@ -106,7 +111,7 @@ public func assertMacro(
   line: UInt = #line,
   column: UInt = #column
 ) {
-  guard isRecording ?? (MacroTestingConfiguration.current.record == .all) else {
+  guard isRecording ?? (SnapshotTestingConfiguration.current?.record == .all) else {
     recordIssue("Re-record this assertion", file: file, line: line)
     return
   }
