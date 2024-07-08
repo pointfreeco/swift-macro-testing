@@ -26,6 +26,7 @@ final class AddCompletionHandlerTests: BaseTestCase {
         Task {
           completionHandler(await f(a: a, for: b, value))
         }
+
       }
       """
     }
@@ -93,6 +94,7 @@ final class AddCompletionHandlerTests: BaseTestCase {
           Task {
             completionHandler(await fetchData())
           }
+
         }
       }
       """

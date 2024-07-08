@@ -563,8 +563,10 @@ public func withMacroTesting<R>(
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
   if let macros { configuration.macros = macros }
-  try MacroTestingConfiguration.$current.withValue(configuration) {
-    try operation()
+  _ = try withSnapshotTesting(record: record) {
+    try MacroTestingConfiguration.$current.withValue(configuration) {
+      try operation()
+    }
   }
 }
 
