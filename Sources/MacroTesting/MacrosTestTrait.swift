@@ -1,7 +1,7 @@
 #if canImport(Testing)
   import SnapshotTesting
   import SwiftSyntax
-import SwiftSyntaxMacros
+  import SwiftSyntaxMacros
   @_spi(Experimental) import Testing
 
   @_spi(Experimental)
