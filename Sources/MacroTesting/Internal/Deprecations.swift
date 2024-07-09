@@ -106,20 +106,27 @@ public func assertMacro(
   record isRecording: Bool? = nil,
   of originalSource: () throws -> String,
   matches expandedOrDiagnosedSource: () -> String,
-  file: StaticString = #filePath,
+  fileID: StaticString = #fileID,
+  file filePath: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
   column: UInt = #column
 ) {
   guard isRecording ?? (SnapshotTestingConfiguration.current?.record == .all) else {
-    recordIssue("Re-record this assertion", file: file, line: line)
+    recordIssue(
+      "Re-record this assertion",
+      fileID: fileID,
+      filePath: filePath,
+      line: line,
+      column: column
+    )
     return
   }
   assertMacro(
     macros,
     record: true,
     of: originalSource,
-    file: file,
+    file: filePath,
     function: function,
     line: line,
     column: column
@@ -132,7 +139,8 @@ public func assertMacro(
   record isRecording: Bool? = nil,
   of originalSource: () throws -> String,
   matches expandedOrDiagnosedSource: () -> String,
-  file: StaticString = #filePath,
+  fileID: StaticString = #fileID,
+  file filePath: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
   column: UInt = #column
@@ -142,7 +150,8 @@ public func assertMacro(
     record: isRecording,
     of: originalSource,
     matches: expandedOrDiagnosedSource,
-    file: file,
+    fileID: fileID,
+    file: filePath,
     function: function,
     line: line,
     column: column
@@ -158,12 +167,19 @@ public func assertMacro(
   record isRecording: Bool? = nil,
   of originalSource: () throws -> String,
   matches expandedOrDiagnosedSource: () -> String,
-  file: StaticString = #filePath,
+  fileID: StaticString = #fileID,
+  file filePath: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
   column: UInt = #column
 ) {
-  recordIssue("Delete 'matches' and re-record this assertion", file: file, line: line)
+  recordIssue(
+    "Delete 'matches' and re-record this assertion",
+    fileID: fileID,
+    filePath: filePath,
+    line: line,
+    column: column
+  )
 }
 
 @available(
@@ -175,7 +191,8 @@ public func assertMacro(
   record isRecording: Bool? = nil,
   of originalSource: () throws -> String,
   matches expandedOrDiagnosedSource: () -> String,
-  file: StaticString = #filePath,
+  fileID: StaticString = #fileID,
+  file filePath: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
   column: UInt = #column
@@ -186,7 +203,8 @@ public func assertMacro(
     record: isRecording,
     of: originalSource,
     matches: expandedOrDiagnosedSource,
-    file: file,
+    fileID: fileID,
+    file: filePath,
     function: function,
     line: line,
     column: column

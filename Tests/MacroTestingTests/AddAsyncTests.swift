@@ -34,7 +34,6 @@ final class AddAsyncMacroTests: BaseTestCase {
             }
           }
         }
-
       }
       """#
     }
@@ -61,7 +60,6 @@ final class AddAsyncMacroTests: BaseTestCase {
             continuation.resume(returning: returnValue)
           }
         }
-
       }
       """
     }

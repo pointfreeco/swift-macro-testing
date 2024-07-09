@@ -118,7 +118,8 @@ public func assertMacro(
   diagnostics diagnosedSource: (() -> String)? = nil,
   fixes fixedSource: (() -> String)? = nil,
   expansion expandedSource: (() -> String)? = nil,
-  file: StaticString = #filePath,
+  fileID: StaticString = #fileID,
+  file filePath: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
   column: UInt = #column
@@ -143,8 +144,10 @@ public func assertMacro(
               …
             }
         """,
-        file: file,
-        line: line
+        fileID: fileID,
+        filePath: filePath,
+        line: line,
+        column: column
       )
       return
     }
@@ -233,7 +236,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: diagnosedSource,
-          file: file,
+          file: filePath,
           function: function,
           line: line,
           column: column
@@ -253,7 +256,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: diagnosedSource,
-          file: file,
+          file: filePath,
           function: function,
           line: line,
           column: column
@@ -294,7 +297,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: fixedSource,
-          file: file,
+          file: filePath,
           function: function,
           line: line,
           column: column
@@ -332,7 +335,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: fixedSource,
-          file: file,
+          file: filePath,
           function: function,
           line: line,
           column: column
@@ -354,7 +357,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: expandedSource,
-          file: file,
+          file: filePath,
           function: function,
           line: line,
           column: column
@@ -374,14 +377,20 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: expandedSource,
-          file: file,
+          file: filePath,
           function: function,
           line: line,
           column: column
         )
       }
     } catch {
-      recordIssue("Threw error: \(error)", file: file, line: line)
+      recordIssue(
+        "Threw error: \(error)",
+        fileID: fileID,
+        filePath: filePath,
+        line: line,
+        column: column
+      )
     }
   }
 }
@@ -470,7 +479,8 @@ public func assertMacro(
   diagnostics diagnosedSource: (() -> String)? = nil,
   fixes fixedSource: (() -> String)? = nil,
   expansion expandedSource: (() -> String)? = nil,
-  file: StaticString = #filePath,
+  fileID: StaticString = #fileID,
+  file filePath: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
   column: UInt = #column
@@ -483,7 +493,8 @@ public func assertMacro(
     diagnostics: diagnosedSource,
     fixes: fixedSource,
     expansion: expandedSource,
-    file: file,
+    fileID: fileID,
+    file: filePath,
     function: function,
     line: line,
     column: column
