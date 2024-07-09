@@ -1,4 +1,5 @@
 import InlineSnapshotTesting
+@_spi(Internals) import SnapshotTesting
 import SwiftDiagnostics
 import SwiftOperators
 import SwiftParser
@@ -8,6 +9,95 @@ import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
 import XCTest
 
+// MARK: Deprecated after 0.4.2
+
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(macOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(visionOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(watchOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@_disfavoredOverload
+public func withMacroTesting<R>(
+  indentationWidth: Trivia? = nil,
+  isRecording: Bool? = nil,
+  macros: [String: Macro.Type]? = nil,
+  operation: () async throws -> R
+) async rethrows {
+  var configuration = MacroTestingConfiguration.current
+  if let indentationWidth { configuration.indentationWidth = indentationWidth }
+  let record: SnapshotTestingConfiguration.Record? = isRecording.map { $0 ? .all : .missing }
+  if let macros { configuration.macros = macros }
+  _ = try await withSnapshotTesting(record: record) {
+    try await MacroTestingConfiguration.$current.withValue(configuration) {
+      try await operation()
+    }
+  }
+}
+
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(macOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(visionOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(watchOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@_disfavoredOverload
+public func withMacroTesting<R>(
+  indentationWidth: Trivia? = nil,
+  isRecording: Bool? = nil,
+  macros: [String: Macro.Type]? = nil,
+  operation: () throws -> R
+) rethrows {
+  var configuration = MacroTestingConfiguration.current
+  if let indentationWidth { configuration.indentationWidth = indentationWidth }
+  let record: SnapshotTestingConfiguration.Record? = isRecording.map { $0 ? .all : .missing }
+  if let macros { configuration.macros = macros }
+  _ = try withSnapshotTesting(record: record) {
+    try MacroTestingConfiguration.$current.withValue(configuration) {
+      try operation()
+    }
+  }
+}
+
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(macOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(visionOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(watchOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@_disfavoredOverload
+public func withMacroTesting<R>(
+  indentationWidth: Trivia? = nil,
+  isRecording: Bool? = nil,
+  macros: [Macro.Type],
+  operation: () async throws -> R
+) async rethrows {
+  try await withMacroTesting(
+    indentationWidth: indentationWidth,
+    isRecording: isRecording,
+    macros: Dictionary(macros: macros),
+    operation: operation
+  )
+}
+
+
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(macOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(visionOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(watchOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@_disfavoredOverload
+public func withMacroTesting<R>(
+  indentationWidth: Trivia? = nil,
+  isRecording: Bool? = nil,
+  macros: [Macro.Type],
+  operation: () throws -> R
+) rethrows {
+  try withMacroTesting(
+    indentationWidth: indentationWidth,
+    isRecording: isRecording,
+    macros: Dictionary(macros: macros),
+    operation: operation
+  )
+}
+
 // MARK: Deprecated after 0.1.0
 
 @available(*, deprecated, message: "Re-record this assertion")
@@ -16,20 +106,27 @@ public func assertMacro(
   record isRecording: Bool? = nil,
   of originalSource: () throws -> String,
   matches expandedOrDiagnosedSource: () -> String,
-  file: StaticString = #filePath,
+  fileID: StaticString = #fileID,
+  file filePath: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
   column: UInt = #column
 ) {
-  guard isRecording ?? MacroTestingConfiguration.current.isRecording else {
-    XCTFail("Re-record this assertion", file: file, line: line)
+  guard isRecording ?? (SnapshotTestingConfiguration.current?.record == .all) else {
+    recordIssue(
+      "Re-record this assertion",
+      fileID: fileID,
+      filePath: filePath,
+      line: line,
+      column: column
+    )
     return
   }
   assertMacro(
     macros,
     record: true,
     of: originalSource,
-    file: file,
+    file: filePath,
     function: function,
     line: line,
     column: column
@@ -42,7 +139,8 @@ public func assertMacro(
   record isRecording: Bool? = nil,
   of originalSource: () throws -> String,
   matches expandedOrDiagnosedSource: () -> String,
-  file: StaticString = #filePath,
+  fileID: StaticString = #fileID,
+  file filePath: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
   column: UInt = #column
@@ -52,7 +150,8 @@ public func assertMacro(
     record: isRecording,
     of: originalSource,
     matches: expandedOrDiagnosedSource,
-    file: file,
+    fileID: fileID,
+    file: filePath,
     function: function,
     line: line,
     column: column
@@ -68,12 +167,19 @@ public func assertMacro(
   record isRecording: Bool? = nil,
   of originalSource: () throws -> String,
   matches expandedOrDiagnosedSource: () -> String,
-  file: StaticString = #filePath,
+  fileID: StaticString = #fileID,
+  file filePath: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
   column: UInt = #column
 ) {
-  XCTFail("Delete 'matches' and re-record this assertion", file: file, line: line)
+  recordIssue(
+    "Delete 'matches' and re-record this assertion",
+    fileID: fileID,
+    filePath: filePath,
+    line: line,
+    column: column
+  )
 }
 
 @available(
@@ -85,7 +191,8 @@ public func assertMacro(
   record isRecording: Bool? = nil,
   of originalSource: () throws -> String,
   matches expandedOrDiagnosedSource: () -> String,
-  file: StaticString = #filePath,
+  fileID: StaticString = #fileID,
+  file filePath: StaticString = #filePath,
   function: StaticString = #function,
   line: UInt = #line,
   column: UInt = #column
@@ -96,7 +203,8 @@ public func assertMacro(
     record: isRecording,
     of: originalSource,
     matches: expandedOrDiagnosedSource,
-    file: file,
+    fileID: fileID,
+    file: filePath,
     function: function,
     line: line,
     column: column
