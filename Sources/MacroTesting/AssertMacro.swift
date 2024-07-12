@@ -236,6 +236,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: diagnosedSource,
+          fileID: fileID,
           file: filePath,
           function: function,
           line: line,
@@ -256,6 +257,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: diagnosedSource,
+          fileID: fileID,
           file: filePath,
           function: function,
           line: line,
@@ -297,6 +299,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: fixedSource,
+          fileID: fileID,
           file: filePath,
           function: function,
           line: line,
@@ -335,6 +338,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: fixedSource,
+          fileID: fileID,
           file: filePath,
           function: function,
           line: line,
@@ -357,6 +361,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: expandedSource,
+          fileID: fileID,
           file: filePath,
           function: function,
           line: line,
@@ -377,6 +382,7 @@ public func assertMacro(
             trailingClosureOffset: offset
           ),
           matches: expandedSource,
+          fileID: fileID,
           file: filePath,
           function: function,
           line: line,
