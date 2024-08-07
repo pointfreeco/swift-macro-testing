@@ -9,6 +9,10 @@ import SwiftSyntaxMacroExpansion
 import SwiftSyntaxMacros
 import XCTest
 
+#if canImport(Testing)
+  import Testing
+#endif
+
 /// Asserts that a given Swift source string matches an expected string with all macros expanded.
 ///
 /// To write a macro assertion, you simply pass the mapping of macros to expand along with the
@@ -124,7 +128,12 @@ public func assertMacro(
   line: UInt = #line,
   column: UInt = #column
 ) {
-  withSnapshotTesting(record: record ?? SnapshotTestingConfiguration.current?.record) {
+  #if canImport(Testing)
+    let record = record ?? SnapshotTestingConfiguration.current?.record ?? Test.current?.record
+  #else
+    let record = record ?? SnapshotTestingConfiguration.current?.record
+  #endif
+  withSnapshotTesting(record: record) {
     let macros = macros ?? MacroTestingConfiguration.current.macros
     guard let macros, !macros.isEmpty else {
       recordIssue(
