@@ -2,7 +2,7 @@
   import SnapshotTesting
   import SwiftSyntax
   import SwiftSyntaxMacros
-  @_spi(Experimental) import Testing
+  import Testing
 
   @_spi(Experimental)
   extension Trait where Self == _MacrosTestTrait {
@@ -28,24 +28,29 @@
 
   /// A type representing the configuration of snapshot testing.
   @_spi(Experimental)
-  public struct _MacrosTestTrait: CustomExecutionTrait, SuiteTrait, TestTrait {
+  public struct _MacrosTestTrait: SuiteTrait, TestTrait {
     public let isRecursive = true
     let configuration: MacroTestingConfiguration
     let record: SnapshotTestingConfiguration.Record?
+  }
 
-    public func execute(
-      _ function: @escaping () async throws -> Void,
-      for test: Test,
-      testCase: Test.Case?
-    ) async throws {
-      try await withMacroTesting(
-        indentationWidth: configuration.indentationWidth,
-        macros: configuration.macros
-      ) {
-        try await withSnapshotTesting(record: record) {
-          try await function()
+  extension Test {
+    var macros: [String: Macro.Type]? {
+      for trait in traits.reversed() {
+        if let macros = (trait as? _MacrosTestTrait)?.configuration.macros {
+          return macros
         }
       }
+      return nil
+    }
+
+    var record: SnapshotTestingConfiguration.Record? {
+      for trait in traits.reversed() {
+        if let macros = (trait as? _MacrosTestTrait)?.record {
+          return macros
+        }
+      }
+      return nil
     }
   }
 #endif
