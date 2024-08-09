@@ -35,6 +35,15 @@
   }
 
   extension Test {
+    var indentationWidth: Trivia? {
+      for trait in traits.reversed() {
+        if let indentationWidth = (trait as? _MacrosTestTrait)?.configuration.indentationWidth {
+          return indentationWidth
+        }
+      }
+      return nil
+    }
+
     var macros: [String: Macro.Type]? {
       for trait in traits.reversed() {
         if let macros = (trait as? _MacrosTestTrait)?.configuration.macros {

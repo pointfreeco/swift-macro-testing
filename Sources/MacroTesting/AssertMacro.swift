@@ -128,17 +128,21 @@ public func assertMacro(
   line: UInt = #line,
   column: UInt = #column
 ) {
+  var indentationWidth = indentationWidth
+    ?? MacroTestingConfiguration.current.indentationWidth
+  var macros = macros
+    ?? MacroTestingConfiguration.current.macros
+  var record = record
+    ?? SnapshotTestingConfiguration.current?.record
   #if canImport(Testing)
-    let record = record ?? SnapshotTestingConfiguration.current?.record ?? Test.current?.record
-  #else
-    let record = record ?? SnapshotTestingConfiguration.current?.record
+    indentationWidth = indentationWidth
+      ?? Test.current?.indentationWidth
+    macros = macros
+      ?? Test.current?.macros
+    record = record
+      ?? Test.current?.record
   #endif
-  withSnapshotTesting(record: record) {
-    #if canImport(Testing)
-      let macros = macros ?? MacroTestingConfiguration.current.macros ?? Test.current?.macros
-    #else
-      let macros = macros ?? MacroTestingConfiguration.current.macros
-    #endif
+  withMacroTesting(indentationWidth: indentationWidth, record: record, macros: macros) {
     guard let macros, !macros.isEmpty else {
       recordIssue(
         """
