@@ -129,16 +129,23 @@ public func assertMacro(
   column: UInt = #column
 ) {
   #if canImport(Testing)
-    let record = record ?? SnapshotTestingConfiguration.current?.record ?? Test.current?.record
-  #else
+    let indentationWidth = indentationWidth
+      ?? MacroTestingConfiguration.current.indentationWidth
+      ?? Test.current?.indentationWidth
+    let macros = macros
+      ?? MacroTestingConfiguration.current.macros
+      ?? Test.current?.macros
     let record = record ?? SnapshotTestingConfiguration.current?.record
+      ?? Test.current?.record
+  #else
+    let indentationWidth = indentationWidth
+      ?? MacroTestingConfiguration.current.indentationWidth
+    let macros = macros
+      ?? MacroTestingConfiguration.current.macros
+    let record = record
+      ?? SnapshotTestingConfiguration.current?.record
   #endif
   withSnapshotTesting(record: record) {
-    #if canImport(Testing)
-      let macros = macros ?? MacroTestingConfiguration.current.macros ?? Test.current?.macros
-    #else
-      let macros = macros ?? MacroTestingConfiguration.current.macros
-    #endif
     guard let macros, !macros.isEmpty else {
       recordIssue(
         """
@@ -175,7 +182,6 @@ public func assertMacro(
       let origDiagnostics = ParseDiagnosticsGenerator.diagnostics(for: origSourceFile)
       let indentationWidth =
         indentationWidth
-        ?? MacroTestingConfiguration.current.indentationWidth
         ?? Trivia(
           stringLiteral: String(
             SourceLocationConverter(fileName: "-", tree: origSourceFile).sourceLines
