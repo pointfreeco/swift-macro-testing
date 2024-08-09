@@ -134,7 +134,11 @@ public func assertMacro(
     let record = record ?? SnapshotTestingConfiguration.current?.record
   #endif
   withSnapshotTesting(record: record) {
-    let macros = macros ?? MacroTestingConfiguration.current.macros
+    #if canImport(Testing)
+      let macros = macros ?? MacroTestingConfiguration.current.macros ?? Test.current?.macros
+    #else
+      let macros = macros ?? MacroTestingConfiguration.current.macros
+    #endif
     guard let macros, !macros.isEmpty else {
       recordIssue(
         """
