@@ -203,7 +203,9 @@ public func assertMacro(
       #if canImport(SwiftSyntax600)
         var expandedSourceFile = origSourceFile.expand(
           macros: macros,
-          contextGenerator: { _ in context },
+          contextGenerator: { syntax in
+            BasicMacroExpansionContext(sharingWith: context, lexicalContext: syntax.allMacroLexicalContexts())
+          },
           indentationWidth: indentationWidth
         )
       #else
