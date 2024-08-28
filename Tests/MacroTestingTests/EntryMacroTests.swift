@@ -5,7 +5,7 @@ final class EntryMacroTests: BaseTestCase {
   override func invokeTest() {
     withMacroTesting(
       macros: [
-        EntryMacro.self,
+        EntryMacro.self
       ]
     ) {
       super.invokeTest()

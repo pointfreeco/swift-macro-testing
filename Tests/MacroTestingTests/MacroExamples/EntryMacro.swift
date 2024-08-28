@@ -9,17 +9,19 @@ public struct EntryMacro: AccessorMacro {
     in context: some MacroExpansionContext
   ) throws -> [AccessorDeclSyntax] {
     let isInEnvironmentValues = context.lexicalContext.contains { lexicalContext in
-      lexicalContext.as(ExtensionDeclSyntax.self)?.extendedType.trimmedDescription == "EnvironmentValues"
+      lexicalContext.as(ExtensionDeclSyntax.self)?.extendedType.trimmedDescription
+        == "EnvironmentValues"
     }
 
     guard isInEnvironmentValues else {
-      throw MacroExpansionErrorMessage("'@Entry' macro can only attach to var declarations inside extensions of EnvironmentValues")
+      throw MacroExpansionErrorMessage(
+        "'@Entry' macro can only attach to var declarations inside extensions of EnvironmentValues")
     }
 
     return [
       AccessorDeclSyntax(accessorSpecifier: .keyword(.get)) {
         "fatalError()"
-      },
+      }
     ]
   }
 }

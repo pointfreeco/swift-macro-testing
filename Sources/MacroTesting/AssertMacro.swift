@@ -204,7 +204,8 @@ public func assertMacro(
         var expandedSourceFile = origSourceFile.expand(
           macros: macros,
           contextGenerator: { syntax in
-            BasicMacroExpansionContext(sharingWith: context, lexicalContext: syntax.allMacroLexicalContexts())
+            BasicMacroExpansionContext(
+              sharingWith: context, lexicalContext: syntax.allMacroLexicalContexts())
           },
           indentationWidth: indentationWidth
         )
