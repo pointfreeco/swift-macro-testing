@@ -10,7 +10,7 @@ import SwiftSyntaxMacros
 import XCTest
 
 #if canImport(Testing)
-@_implementationOnly import Testing
+  @_implementationOnly import Testing
 #endif
 
 /// Asserts that a given Swift source string matches an expected string with all macros expanded.
