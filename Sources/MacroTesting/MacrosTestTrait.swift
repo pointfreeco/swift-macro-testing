@@ -2,7 +2,7 @@
   import SnapshotTesting
   import SwiftSyntax
   import SwiftSyntaxMacros
-  import Testing
+  @_implementationOnly import Testing
 
   @_spi(Experimental)
   extension Trait where Self == _MacrosTestTrait {
