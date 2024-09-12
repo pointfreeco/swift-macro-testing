@@ -10,9 +10,7 @@ import SwiftSyntaxMacros
 import XCTest
 
 #if canImport(Testing)
-  // NB: We are importing only the implementation of Testing because that framework is not available
-  //     in Xcode UI test targets.
-  @_implementationOnly import Testing
+  import Testing
 #endif
 
 /// Asserts that a given Swift source string matches an expected string with all macros expanded.
