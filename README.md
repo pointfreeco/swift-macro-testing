@@ -82,7 +82,7 @@ You can even have the library automatically re-record the macro expansion direct
 file by providing the `record` argument to `assertMacro`:
 
 ```swift
-assertMacro(["stringify": StringifyMacro.self], record: true) {
+assertMacro(["stringify": StringifyMacro.self], record: .all) {
   """
   #stringify(a + b)
   """
@@ -126,13 +126,13 @@ class StringifyMacroTests: XCTestCase {
 }
 ```
 
-You can pass the `isRecording` parameter to `withMacroTesting` to re-record every assertion in the
+You can pass the `record` parameter to `withMacroTesting` to re-record every assertion in the
 test case (or suite, if you're using your own custom base test case class):
 
 ```swift
 override func invokeTest() {
   withMacroTesting(
-    isRecording: true
+    record: .all
   ) {
     super.invokeTest()
   }
@@ -186,6 +186,41 @@ func testNonAsyncFunctionDiagnostic() {
   }
 }
 ```
+
+## Integration with Swift Testing
+
+If you are using Swift's built-in Testing framework, this library also supports it. Instead of relying solely
+on XCTest, you can configure your tests using the `Trait` system provided by `swift-testing`. For example:
+
+```swift
+import Testing
+import MacroTesting
+
+@Suite(
+  .macros(
+    record: .missing // Record only missing snapshots
+    macros: ["stringify": StringifyMacro.self],
+  )
+)
+struct StringifyMacroSwiftTestingTests {
+  @Test
+  func testStringify() {
+    assertMacro {
+      """
+      #stringify(a + b)
+      """
+    } expansion: {
+      """
+      (a + b, "a + b")
+      """
+    }
+  }
+}
+```
+
+Additionally, the `record` parameter in `macros` can be used to control the recording behavior for all
+tests in the suite. This value can also be configured using the `SNAPSHOT_TESTING_RECORD` environment
+variable to dynamically adjust recording behavior based on your CI or local environment.
 
 ## Documentation
 
