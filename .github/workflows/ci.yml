@@ -26,30 +26,35 @@ jobs:
 
   linux:
     name: Linux
+    strategy:
+      matrix:
+        swift:
+          - '6.0'
     runs-on: ubuntu-latest
+    container: swift:${{ matrix.swift }}
     steps:
-      - name: Install Swift
-        uses: slashmo/install-swift@v0.4.0
-        with:
-          version: swift-5.9-DEVELOPMENT-SNAPSHOT-2023-09-16-a
       - uses: actions/checkout@v4
       - name: Run tests
         run: swift test
 
-  # NB: 5.9 snapshot unavailable, wait for release
+  # NB: swift-snapshot-testing needs to be updated for Wasm support
   # wasm:
   #   name: Wasm
   #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       include:
-  #         - { toolchain: wasm-5.9-RELEASE }
   #   steps:
   #     - uses: actions/checkout@v4
-  #     - run: echo "${{ matrix.toolchain }}" > .swift-version
-  #     - uses: swiftwasm/swiftwasm-action@v5.9
-  #       with:
-  #         shell-action: carton test --environment node
+  #     - uses: bytecodealliance/actions/wasmtime/setup@v1
+  #     - name: Install Swift and Swift SDK for WebAssembly
+  #       run: |
+  #         PREFIX=/opt/swift
+  #         set -ex
+  #         curl -f -o /tmp/swift.tar.gz "https://download.swift.org/swift-6.0.2-release/ubuntu2204/swift-6.0.2-RELEASE/swift-6.0.2-RELEASE-ubuntu22.04.tar.gz"
+  #         sudo mkdir -p $PREFIX; sudo tar -xzf /tmp/swift.tar.gz -C $PREFIX --strip-component 1
+  #         $PREFIX/usr/bin/swift sdk install https://github.com/swiftwasm/swift/releases/download/swift-wasm-6.0.2-RELEASE/swift-wasm-6.0.2-RELEASE-wasm32-unknown-wasi.artifactbundle.zip --checksum 6ffedb055cb9956395d9f435d03d53ebe9f6a8d45106b979d1b7f53358e1dcb4
+  #         echo "$PREFIX/usr/bin" >> $GITHUB_PATH
+  #
+  #     - name: Build
+  #       run: swift build --swift-sdk wasm32-unknown-wasi -Xlinker -z -Xlinker stack-size=$((1024 * 1024))
 
   # NB: 5.9 snapshot outdated, wait for release
   # windows:
