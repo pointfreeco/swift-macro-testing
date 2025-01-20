@@ -4,13 +4,17 @@
   import SwiftSyntaxMacros
   import Testing
 
-  @_spi(Experimental)
   extension Trait where Self == _MacrosTestTrait {
     /// Configure snapshot testing in a suite or test.
     ///
     /// - Parameters:
-    ///   - record: The record mode of the test.
-    ///   - diffTool: The diff tool to use in failure messages.
+    ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion (e.g., `.spaces(2)`).
+    ///     Defaults to the original source's indentation if unspecified.
+    ///   - record: The recording strategy to use for macro expansions. This can be set to `.all`, `.missing`,
+    ///     `.never`, or `.failed`. If not provided, it uses the current configuration, which can also be set via
+    ///     the `SNAPSHOT_TESTING_RECORD` environment variable.
+    ///   - macros: A dictionary mapping macro names to their implementations. This specifies which macros
+    ///     should be expanded during testing.
     public static func macros(
       indentationWidth: Trivia? = nil,
       record: SnapshotTestingConfiguration.Record? = nil,
@@ -27,7 +31,6 @@
   }
 
   /// A type representing the configuration of snapshot testing.
-  @_spi(Experimental)
   public struct _MacrosTestTrait: SuiteTrait, TestTrait {
     public let isRecursive = true
     let configuration: MacroTestingConfiguration

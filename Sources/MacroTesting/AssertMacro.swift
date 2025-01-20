@@ -69,7 +69,7 @@ import XCTest
 /// }
 /// ```
 ///
-/// > Tip: Use ``withMacroTesting(indentationWidth:isRecording:macros:operation:)-5id9j`` in your
+/// > Tip: Use ``withMacroTesting(indentationWidth:record:macros:operation:)-7cm1s`` in your
 /// > test case's `invokeTest` to avoid the repetitive work of passing the macro mapping to every
 /// > `assertMacro`:
 /// >
@@ -96,17 +96,19 @@ import XCTest
 ///
 /// - Parameters:
 ///   - macros: The macros to expand in the original source string. Required, either implicitly via
-///     ``withMacroTesting(indentationWidth:isRecording:macros:operation:)-5id9j``, or explicitly
+///     ``withMacroTesting(indentationWidth:record:macros:operation:)-7cm1s``, or explicitly
 ///     via this parameter.
 ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
 ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
 ///     original source lacks indentation, it defaults to `.spaces(4)`.
-///   - isRecording: Always records new snapshots when enabled.
+///   - record: The recording strategy to use for the macro expansion. If not provided, it defaults to the current
+///     configuration, which can be set using the `SNAPSHOT_TESTING_RECORD` environment variable
 ///   - originalSource: A string of Swift source code.
 ///   - diagnosedSource: Swift source code annotated with expected diagnostics.
 ///   - fixedSource: Swift source code with expected fix-its applied.
 ///   - expandedSource: Expected Swift source string with macros expanded.
-///   - file: The file where the assertion occurs. The default is the filename of the test case
+///   - fileID: The file ID where the assertion occurs.
+///   - filePath: The file where the assertion occurs. The default is the filename of the test case
 ///     where you call this function.
 ///   - function: The function where the assertion occurs. The default is the name of the test
 ///     method where you call this function.
@@ -480,22 +482,24 @@ extension BasicMacroExpansionContext {
 
 /// Asserts that a given Swift source string matches an expected string with all macros expanded.
 ///
-/// See ``assertMacro(_:indentationWidth:record:of:diagnostics:fixes:expansion:file:function:line:column:)-pkfi``
+/// See ``assertMacro(_:indentationWidth:record:of:diagnostics:fixes:expansion:fileID:file:function:line:column:)-90l38``
 /// for more details.
 ///
 /// - Parameters:
 ///   - macros: The macros to expand in the original source string. Required, either implicitly via
-///     ``withMacroTesting(indentationWidth:isRecording:macros:operation:)-5id9j``, or explicitly
+///     ``withMacroTesting(indentationWidth:record:macros:operation:)-7cm1s``, or explicitly
 ///     via this parameter.
 ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
 ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
 ///     original source lacks indentation, it defaults to `.spaces(4)`.
-///   - isRecording: Always records new snapshots when enabled.
+///   - record: The recording strategy to use. If not provided, it defaults to the current
+///     configuration, which can be set using the `SNAPSHOT_TESTING_RECORD` environment variable.
 ///   - originalSource: A string of Swift source code.
 ///   - diagnosedSource: Swift source code annotated with expected diagnostics.
 ///   - fixedSource: Swift source code with expected fix-its applied.
 ///   - expandedSource: Expected Swift source string with macros expanded.
-///   - file: The file where the assertion occurs. The default is the filename of the test case
+///   - fileID: The file ID where the assertion occurs.
+///   - filePath: The file where the assertion occurs. The default is the filename of the test case
 ///     where you call this function.
 ///   - function: The function where the assertion occurs. The default is the name of the test
 ///     method where you call this function.
@@ -557,7 +561,7 @@ public func assertMacro(
 /// ```swift
 /// class StringifyTests: XCTestCase {
 ///   override func invokeTest() {
-///     withMacroTesting(isRecording: true, macros: [StringifyMacro.self]) {
+///     withMacroTesting(record: .all, macros: [StringifyMacro.self]) {
 ///       super.invokeTest()
 ///     }
 ///   }
@@ -568,7 +572,8 @@ public func assertMacro(
 ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
 ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
 ///     original source lacks indentation, it defaults to `.spaces(4)`.
-///   - isRecording: Determines if a new macro expansion will be recorded.
+///   - record: The recording strategy to use for the macro expansion. If not provided, it defaults to the current
+///     configuration, which can be set using the `SNAPSHOT_TESTING_RECORD` environment variable.
 ///   - macros: Specifies the macros to be expanded in the input Swift source string.
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
@@ -589,14 +594,15 @@ public func withMacroTesting<R>(
 
 /// Customizes `assertMacro` for the duration of an operation.
 ///
-/// See ``withMacroTesting(indentationWidth:isRecording:macros:operation:)-5id9j`` for
+/// See ``withMacroTesting(indentationWidth:record:macros:operation:)-7cm1s`` for
 /// more details.
 ///
 /// - Parameters:
 ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
 ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
 ///     original source lacks indentation, it defaults to `.spaces(4)`.
-///   - isRecording: Determines if a new macro expansion will be recorded.
+///   - record: The recording strategy to use for the macro expansion. If not provided, it defaults to the current
+///     configuration, which can be set using the `SNAPSHOT_TESTING_RECORD` environment variable.
 ///   - macros: Specifies the macros to be expanded in the input Swift source string.
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
@@ -617,14 +623,15 @@ public func withMacroTesting<R>(
 
 /// Customizes `assertMacro` for the duration of an operation.
 ///
-/// See ``withMacroTesting(indentationWidth:isRecording:macros:operation:)-5id9j`` for
-/// more details.
+/// See ``assertMacro(_:indentationWidth:record:of:diagnostics:fixes:expansion:fileID:file:function:line:column:)-90l38``
+/// for more details.
 ///
 /// - Parameters:
 ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
 ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
 ///     original source lacks indentation, it defaults to `.spaces(4)`.
-///   - isRecording: Determines if a new macro expansion will be recorded.
+///   - record: The recording strategy to use for the macro expansion. If not provided, it defaults to the current
+///     configuration, which can be set using the `SNAPSHOT_TESTING_RECORD` environment variable.
 ///   - macros: Specifies the macros to be expanded in the input Swift source string.
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
@@ -643,14 +650,15 @@ public func withMacroTesting<R>(
 
 /// Customizes `assertMacro` for the duration of an operation.
 ///
-/// See ``withMacroTesting(indentationWidth:isRecording:macros:operation:)-5id9j`` for
+/// See ``withMacroTesting(indentationWidth:record:macros:operation:)-7cm1s`` for
 /// more details.
 ///
 /// - Parameters:
 ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
 ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
 ///     original source lacks indentation, it defaults to `.spaces(4)`.
-///   - isRecording: Determines if a new macro expansion will be recorded.
+///   - record: The recording strategy to use for the macro expansion. If not provided, it defaults to the current
+///     configuration, which can be set using the `SNAPSHOT_TESTING_RECORD` environment variable
 ///   - macros: Specifies the macros to be expanded in the input Swift source string.
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(

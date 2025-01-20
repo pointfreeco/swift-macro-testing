@@ -57,9 +57,9 @@ running the test again will produce a nicely formatted message:
 
 You can even have the library automatically re-record the macro expansion directly into your test
 file by providing the `record` argument to
-``assertMacro(_:record:of:diagnostics:fixes:expansion:file:function:line:column:)-6hxgm``
+``assertMacro(_:indentationWidth:record:of:diagnostics:fixes:expansion:fileID:file:function:line:column:)-8zqk4``
 ```swift
-assertMacro(["stringify": StringifyMacro.self], record: true) {
+assertMacro(["stringify": StringifyMacro.self], record: .all) {
   """
   #stringify(a + b)
   """
@@ -103,14 +103,14 @@ class StringifyMacroTests: XCTestCase {
 }
 ```
 
-You can pass the `isRecording` parameter to
-``withMacroTesting(isRecording:macros:operation:)-2vypn`` to re-record every assertion in the test
+You can pass the `record` parameter to
+``withMacroTesting(indentationWidth:record:macros:operation:)-7cm1s`` to re-record every assertion in the test
 case (or suite, if you're using your own custom base test case class):
 
 ```swift
 override func invokeTest() {
   withMacroTesting(
-    isRecording: true
+    record: .all
   ) {
     super.invokeTest()
   }
@@ -169,5 +169,5 @@ func testNonAsyncFunctionDiagnostic() {
 
 ### Essentials
 
-- ``assertMacro(_:record:of:diagnostics:fixes:expansion:file:function:line:column:)-6hxgm``
-- ``withMacroTesting(isRecording:macros:operation:)-2vypn``
+- ``assertMacro(_:indentationWidth:record:of:diagnostics:fixes:expansion:fileID:file:function:line:column:)-8zqk4``
+- ``withMacroTesting(indentationWidth:record:macros:operation:)-7cm1s``
