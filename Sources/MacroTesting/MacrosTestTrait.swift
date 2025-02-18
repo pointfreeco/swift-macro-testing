@@ -28,6 +28,29 @@
         record: record
       )
     }
+
+    /// Configure snapshot testing in a suite or test.
+    ///
+    /// - Parameters:
+    ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion (e.g., `.spaces(2)`).
+    ///     Defaults to the original source's indentation if unspecified.
+    ///   - record: The recording strategy to use for macro expansions. This can be set to `.all`, `.missing`,
+    ///     `.never`, or `.failed`. If not provided, it uses the current configuration, which can also be set via
+    ///     the `SNAPSHOT_TESTING_RECORD` environment variable.
+    ///   - macros: An array of macros. This specifies which macros should be expanded during testing.
+    public static func macros(
+      indentationWidth: Trivia? = nil,
+      record: SnapshotTestingConfiguration.Record? = nil,
+      macros: [Macro.Type]? = nil
+    ) -> Self {
+      _MacrosTestTrait(
+        configuration: MacroTestingConfiguration(
+          indentationWidth: indentationWidth,
+          macros: macros.map { Dictionary(macros: $0) }
+        ),
+        record: record
+      )
+    }
   }
 
   /// A type representing the configuration of snapshot testing.
