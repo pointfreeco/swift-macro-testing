@@ -119,7 +119,6 @@ import XCTest
 public func assertMacro(
   _ macros: [String: Macro.Type]? = nil,
   indentationWidth: Trivia? = nil,
-  operators operatorDeclsSource: (() -> String)? = nil,
   record: SnapshotTestingConfiguration.Record? = nil,
   of originalSource: () throws -> String,
   diagnostics diagnosedSource: (() -> String)? = nil,
@@ -180,10 +179,10 @@ public func assertMacro(
     do {
       var origSourceFile = Parser.parse(source: try originalSource())
       var operators = OperatorTable.standardOperators
-      if let operatorDeclsSource = operatorDeclsSource?() {
-        let moreOperators = Parser.parse(source: operatorDeclsSource)
-        try operators.addSourceFile(moreOperators)
-      }
+//      if let operatorDeclsSource = operatorDeclsSource?() {
+//        let moreOperators = Parser.parse(source: operatorDeclsSource)
+      try operators.addSourceFile(origSourceFile)
+//      }
       if let foldedSourceFile = try operators.foldAll(origSourceFile).as(
         SourceFileSyntax.self
       ) {
