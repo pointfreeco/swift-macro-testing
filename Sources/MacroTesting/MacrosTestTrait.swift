@@ -1,8 +1,16 @@
-#if canImport(Testing)
+#if canImport(Testing) && compiler(>=6)
   import SnapshotTesting
   import SwiftSyntax
   import SwiftSyntaxMacros
   import Testing
+
+  /// A type representing the configuration of snapshot testing.
+  @_documentation(visibility: private)
+  public struct _MacrosTestTrait: SuiteTrait, TestTrait {
+    public let isRecursive = true
+    let configuration: MacroTestingConfiguration
+    let record: SnapshotTestingConfiguration.Record?
+  }
 
   extension Trait where Self == _MacrosTestTrait {
     /// Configure snapshot testing in a suite or test.
@@ -53,39 +61,51 @@
     }
   }
 
-  /// A type representing the configuration of snapshot testing.
-  public struct _MacrosTestTrait: SuiteTrait, TestTrait {
-    public let isRecursive = true
-    let configuration: MacroTestingConfiguration
-    let record: SnapshotTestingConfiguration.Record?
-  }
-
-  extension Test {
-    var indentationWidth: Trivia? {
-      for trait in traits.reversed() {
-        if let indentationWidth = (trait as? _MacrosTestTrait)?.configuration.indentationWidth {
-          return indentationWidth
+  #if swift(>=6.1)
+    @_documentation(visibility: private)
+    extension _MacrosTestTrait: TestScoping {
+      public func provideScope(
+        for test: Test,
+        testCase: Test.Case?,
+        performing function: () async throws -> Void
+      ) async throws {
+        try await MacroTestingConfiguration.$current.withValue(configuration) {
+          try await SnapshotTestingConfiguration.$current.withValue(
+            SnapshotTestingConfiguration(record: record, diffTool: nil)
+          ) {
+            try await function()
+          }
         }
       }
-      return nil
     }
-
-    var macros: [String: Macro.Type]? {
-      for trait in traits.reversed() {
-        if let macros = (trait as? _MacrosTestTrait)?.configuration.macros {
-          return macros
+  #else
+    extension Test {
+      var indentationWidth: Trivia? {
+        for trait in traits.reversed() {
+          if let indentationWidth = (trait as? _MacrosTestTrait)?.configuration.indentationWidth {
+            return indentationWidth
+          }
         }
+        return nil
       }
-      return nil
-    }
 
-    var record: SnapshotTestingConfiguration.Record? {
-      for trait in traits.reversed() {
-        if let macros = (trait as? _MacrosTestTrait)?.record {
-          return macros
+      var macros: [String: Macro.Type]? {
+        for trait in traits.reversed() {
+          if let macros = (trait as? _MacrosTestTrait)?.configuration.macros {
+            return macros
+          }
         }
+        return nil
       }
-      return nil
+
+      var record: SnapshotTestingConfiguration.Record? {
+        for trait in traits.reversed() {
+          if let macros = (trait as? _MacrosTestTrait)?.record {
+            return macros
+          }
+        }
+        return nil
+      }
     }
-  }
+  #endif
 #endif

@@ -139,7 +139,7 @@ public func assertMacro(
   var record =
     record
     ?? SnapshotTestingConfiguration.current?.record
-  #if canImport(Testing)
+  #if canImport(Testing) && swift(<6.1)
     indentationWidth =
       indentationWidth
       ?? Test.current?.indentationWidth
@@ -207,7 +207,9 @@ public func assertMacro(
           macros: macros,
           contextGenerator: { syntax in
             BasicMacroExpansionContext(
-              sharingWith: context, lexicalContext: syntax.allMacroLexicalContexts())
+              sharingWith: context,
+              lexicalContext: syntax.allMacroLexicalContexts()
+            )
           },
           indentationWidth: indentationWidth
         )
@@ -305,7 +307,8 @@ public func assertMacro(
         var fixedSourceFile = origSourceFile
         fixedSourceFile = Parser.parse(
           source: FixItApplier.apply(
-            edits: edits, to: origSourceFile
+            edits: edits,
+            to: origSourceFile
           )
           .description
         )
@@ -449,7 +452,9 @@ extension FixIt.Change {
     case .replaceLeadingTrivia(let token, let newTrivia):
       let start = expansionContext.position(of: token.position, anchoredAt: token)
       let end = expansionContext.position(
-        of: token.positionAfterSkippingLeadingTrivia, anchoredAt: token)
+        of: token.positionAfterSkippingLeadingTrivia,
+        anchoredAt: token
+      )
       return SourceEdit(
         range: start..<end,
         replacement: newTrivia.description
@@ -457,7 +462,9 @@ extension FixIt.Change {
 
     case .replaceTrailingTrivia(let token, let newTrivia):
       let start = expansionContext.position(
-        of: token.endPositionBeforeTrailingTrivia, anchoredAt: token)
+        of: token.endPositionBeforeTrailingTrivia,
+        anchoredAt: token
+      )
       let end = expansionContext.position(of: token.endPosition, anchoredAt: token)
       return SourceEdit(
         range: start..<end,
@@ -676,7 +683,7 @@ public func withMacroTesting<R>(
 }
 
 extension Snapshotting where Value == String, Format == String {
-  fileprivate static let _lines = Snapshotting(
+  nonisolated(unsafe) fileprivate static let _lines = Snapshotting(
     pathExtension: "txt",
     diffing: Diffing(
       toData: { Data($0.utf8) },

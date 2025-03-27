@@ -4,7 +4,7 @@
 
   @Suite(
     .macros(
-      //      record: .failed,
+      record: .failed,
       macros: ["URL": URLMacro.self]
     )
   )
