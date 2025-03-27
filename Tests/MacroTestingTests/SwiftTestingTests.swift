@@ -4,8 +4,8 @@
 
   @Suite(
     .macros(
-      //      record: .failed,
-      macros: ["URL": URLMacro.self]
+      ["URL": URLMacro.self],
+      record: .failed
     )
   )
   struct URLMacroSwiftTestingTests {
