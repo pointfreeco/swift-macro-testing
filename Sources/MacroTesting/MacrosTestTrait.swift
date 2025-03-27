@@ -24,9 +24,9 @@
     ///   - macros: A dictionary mapping macro names to their implementations. This specifies which macros
     ///     should be expanded during testing.
     public static func macros(
+      _ macros: [String: Macro.Type]? = nil,
       indentationWidth: Trivia? = nil,
-      record: SnapshotTestingConfiguration.Record? = nil,
-      macros: [String: Macro.Type]? = nil
+      record: SnapshotTestingConfiguration.Record? = nil
     ) -> Self {
       _MacrosTestTrait(
         configuration: MacroTestingConfiguration(
@@ -47,9 +47,9 @@
     ///     the `SNAPSHOT_TESTING_RECORD` environment variable.
     ///   - macros: An array of macros. This specifies which macros should be expanded during testing.
     public static func macros(
+      _ macros: [Macro.Type]? = nil,
       indentationWidth: Trivia? = nil,
-      record: SnapshotTestingConfiguration.Record? = nil,
-      macros: [Macro.Type]? = nil
+      record: SnapshotTestingConfiguration.Record? = nil
     ) -> Self {
       _MacrosTestTrait(
         configuration: MacroTestingConfiguration(
