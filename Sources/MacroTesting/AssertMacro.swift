@@ -1,5 +1,5 @@
 import InlineSnapshotTesting
-@_spi(Internals) import SnapshotTesting
+@_spi(Internals) @preconcurrency import SnapshotTesting
 import SwiftDiagnostics
 import SwiftOperators
 import SwiftParser
@@ -683,7 +683,7 @@ public func withMacroTesting<R>(
 }
 
 extension Snapshotting where Value == String, Format == String {
-  nonisolated(unsafe) fileprivate static let _lines = Snapshotting(
+  fileprivate static let _lines = Snapshotting(
     pathExtension: "txt",
     diffing: Diffing(
       toData: { Data($0.utf8) },
