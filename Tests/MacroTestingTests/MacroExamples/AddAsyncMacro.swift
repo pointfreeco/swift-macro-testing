@@ -135,7 +135,7 @@ public struct AddAsyncMacro: PeerMacro {
     funcDecl.signature.effectSpecifiers = FunctionEffectSpecifiersSyntax(
       leadingTrivia: .space,
       asyncSpecifier: .keyword(.async),
-      throwsSpecifier: isResultReturn ? .keyword(.throws) : nil
+      throwsClause: isResultReturn ? .init(throwsSpecifier: .keyword(.throws)) : nil
     )
 
     // add result type
