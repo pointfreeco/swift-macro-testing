@@ -588,14 +588,14 @@ public func assertMacro(
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
-  operators: String? = nil,
+  operators: (() -> String)? = nil,
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [String: Macro.Type]? = nil,
   operation: () async throws -> R
 ) async rethrows -> R {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
-  if let operators { configuration.operators = operators }
+  if let operators { configuration.operators = operators() }
   if let macros { configuration.macros = macros }
   return try await withSnapshotTesting(record: record) {
     try await MacroTestingConfiguration.$current.withValue(configuration) {
@@ -621,14 +621,14 @@ public func withMacroTesting<R>(
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
-  operators: String? = nil,
+  operators: (() -> String)? = nil,
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [String: Macro.Type]? = nil,
   operation: () throws -> R
 ) rethrows -> R {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
-  if let operators { configuration.operators = operators }
+  if let operators { configuration.operators = operators() }
   if let macros { configuration.macros = macros }
   return try withSnapshotTesting(record: record) {
     try MacroTestingConfiguration.$current.withValue(configuration) {
@@ -654,7 +654,7 @@ public func withMacroTesting<R>(
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
-  operators: String? = nil,
+  operators: (() -> String)? = nil,
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [Macro.Type],
   operation: () async throws -> R
@@ -685,7 +685,7 @@ public func withMacroTesting<R>(
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
-  operators: String? = nil,
+  operators: (() -> String)? = nil,
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [Macro.Type],
   operation: () throws -> R
