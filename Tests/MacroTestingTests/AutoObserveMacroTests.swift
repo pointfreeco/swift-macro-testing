@@ -12,37 +12,37 @@ final class AutoObserveMacroTests: BaseTestCase {
       macros: [AutoObserveMacro.self]
     ) {
       assertMacro {
-      """
-      @AutoObserve
-      override func viewDidLoad() {
-        super.viewDidLoad()
+        """
+        @AutoObserve
+        override func viewDidLoad() {
+          super.viewDidLoad()
 
-        self.view.backgroundColor = .red
-        self.nameLabel.text <~ model.name
-        self.imageView.isHidden <~ model.isAvatarHidden
-      }
-      """
+          self.view.backgroundColor = .red
+          self.nameLabel.text <~ model.name
+          self.imageView.isHidden <~ model.isAvatarHidden
+        }
+        """
       } expansion: {
-      """
-      override func viewDidLoad() {
-        super.viewDidLoad()
-        self.view.backgroundColor = .red
-        observe { [weak self] in
-          guard let self = self else {
-            return
-          }
+        """
+        override func viewDidLoad() {
+          super.viewDidLoad()
+          self.view.backgroundColor = .red
+          observe { [weak self] in
+            guard let self = self else {
+              return
+            }
 
-          self.nameLabel.text  = model.name
-        }
-        observe { [weak self] in
-          guard let self = self else {
-            return
+            self.nameLabel.text = model.name
           }
+          observe { [weak self] in
+            guard let self = self else {
+              return
+            }
 
-          self.imageView.isHidden  = model.isAvatarHidden
+            self.imageView.isHidden = model.isAvatarHidden
+          }
         }
-      }
-      """
+        """
       }
     }
   }
@@ -72,14 +72,14 @@ final class AutoObserveMacroTests: BaseTestCase {
             return
           }
 
-          self.nameLabel.text  = model.name
+          self.nameLabel.text = model.name
         }
         observe { [weak self] in
           guard let self = self else {
             return
           }
 
-          self.imageView.isHidden  = model.isAvatarHidden
+          self.imageView.isHidden = model.isAvatarHidden
         }
       }
       """

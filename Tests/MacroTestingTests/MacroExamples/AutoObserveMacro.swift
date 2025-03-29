@@ -31,9 +31,7 @@ final class ObserveOperatorRewriter: SyntaxRewriter {
       return ExprSyntax(node)
     }
     var assignment = node
-    assignment.operator = ExprSyntax(
-      DeclReferenceExprSyntax(baseName: TokenSyntax.equalToken(leadingTrivia: .space, trailingTrivia: .space))
-    )
+    assignment.operator = ExprSyntax(DeclReferenceExprSyntax(baseName: .equalToken(trailingTrivia: .space)))
     return """
     observe { [weak self] in
       guard let self = self else { return }
