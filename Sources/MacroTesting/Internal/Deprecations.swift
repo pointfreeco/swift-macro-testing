@@ -18,7 +18,7 @@ import XCTest
 #if canImport(Testing) && compiler(>=6)
   extension Trait where Self == _MacrosTestTrait {
 
-    @available(*, deprecated, message: "Use `macros(_:indentationWidth:record:)` instead")
+    @available(*, deprecated, message: "Use `macros(_:indentationWidth:operators:record:)` instead")
     public static func macros(
       indentationWidth: Trivia? = nil,
       record: SnapshotTestingConfiguration.Record? = nil,
@@ -27,7 +27,7 @@ import XCTest
       Self.macros(macros, indentationWidth: indentationWidth, record: record)
     }
 
-    @available(*, deprecated, message: "Use `macros(_:indentationWidth:record:)` instead")
+    @available(*, deprecated, message: "Use `macros(_:indentationWidth:operators:record:)` instead")
     public static func macros(
       indentationWidth: Trivia? = nil,
       record: SnapshotTestingConfiguration.Record? = nil,
@@ -40,22 +40,22 @@ import XCTest
 
 // MARK: Deprecated after 0.4.2
 
-@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)")
 @available(
   macOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
-@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)")
 @available(
   visionOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
 @available(
   watchOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
 @_disfavoredOverload
 public func withMacroTesting<R>(
@@ -75,22 +75,22 @@ public func withMacroTesting<R>(
   }
 }
 
-@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)")
 @available(
   macOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
-@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)")
 @available(
   visionOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
 @available(
   watchOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
 @_disfavoredOverload
 public func withMacroTesting<R>(
@@ -110,22 +110,22 @@ public func withMacroTesting<R>(
   }
 }
 
-@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)")
 @available(
   macOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
-@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)")
 @available(
   visionOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
 @available(
   watchOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
 @_disfavoredOverload
 public func withMacroTesting<R>(
@@ -142,22 +142,22 @@ public func withMacroTesting<R>(
   )
 }
 
-@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(iOS, deprecated, renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)")
 @available(
   macOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
-@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:record:macros:operation:)")
+@available(tvOS, deprecated, renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)")
 @available(
   visionOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
 @available(
   watchOS,
   deprecated,
-  renamed: "withMacroTesting(indentationWidth:record:macros:operation:)"
+  renamed: "withMacroTesting(indentationWidth:operators:record:macros:operation:)"
 )
 @_disfavoredOverload
 public func withMacroTesting<R>(
