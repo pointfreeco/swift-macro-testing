@@ -16,21 +16,25 @@
     /// Configure snapshot testing in a suite or test.
     ///
     /// - Parameters:
+    ///   - macros: A dictionary mapping macro names to their implementations. This specifies which macros
+    ///     should be expanded during testing.
     ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion (e.g., `.spaces(2)`).
     ///     Defaults to the original source's indentation if unspecified.
+    ///   - operators: Any additional user-defined operators that need be known during macro expansion, declared as
+    ///     source code.
     ///   - record: The recording strategy to use for macro expansions. This can be set to `.all`, `.missing`,
     ///     `.never`, or `.failed`. If not provided, it uses the current configuration, which can also be set via
     ///     the `SNAPSHOT_TESTING_RECORD` environment variable.
-    ///   - macros: A dictionary mapping macro names to their implementations. This specifies which macros
-    ///     should be expanded during testing.
     public static func macros(
       _ macros: [String: Macro.Type]? = nil,
       indentationWidth: Trivia? = nil,
+      operators: (() -> String)? = nil,
       record: SnapshotTestingConfiguration.Record? = nil
     ) -> Self {
       _MacrosTestTrait(
         configuration: MacroTestingConfiguration(
           indentationWidth: indentationWidth,
+          operators: operators?(),
           macros: macros
         ),
         record: record
@@ -40,20 +44,24 @@
     /// Configure snapshot testing in a suite or test.
     ///
     /// - Parameters:
+    ///   - macros: An array of macros. This specifies which macros should be expanded during testing.
     ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion (e.g., `.spaces(2)`).
     ///     Defaults to the original source's indentation if unspecified.
+    ///   - operators: Any additional user-defined operators that need be known during macro expansion, declared as
+    ///     source code.
     ///   - record: The recording strategy to use for macro expansions. This can be set to `.all`, `.missing`,
     ///     `.never`, or `.failed`. If not provided, it uses the current configuration, which can also be set via
     ///     the `SNAPSHOT_TESTING_RECORD` environment variable.
-    ///   - macros: An array of macros. This specifies which macros should be expanded during testing.
     public static func macros(
       _ macros: [Macro.Type]? = nil,
       indentationWidth: Trivia? = nil,
+      operators: (() -> String)? = nil,
       record: SnapshotTestingConfiguration.Record? = nil
     ) -> Self {
       _MacrosTestTrait(
         configuration: MacroTestingConfiguration(
           indentationWidth: indentationWidth,
+          operators: operators?(),
           macros: macros.map { Dictionary(macros: $0) }
         ),
         record: record
@@ -93,6 +101,15 @@
         for trait in traits.reversed() {
           if let macros = (trait as? _MacrosTestTrait)?.configuration.macros {
             return macros
+          }
+        }
+        return nil
+      }
+
+      var operators: String? {
+        for trait in traits.reversed() {
+          if let operators = (trait as? _MacrosTestTrait)?.configuration.operators {
+            return operators
           }
         }
         return nil
