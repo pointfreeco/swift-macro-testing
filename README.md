@@ -36,11 +36,12 @@ do is write the following:
 
 ```swift
 import MacroTesting
-import XCTest
+import Testing
 
-class StringifyTests: XCTestCase {
-  func testStringify() {
-    assertMacro(["stringify": StringifyMacro.self]) {
+@Suite(.macros([StringifyMacro.self]))
+struct StringifyTests {
+  @Test func stringify() {
+    assertMacro {
       """
       #stringify(a + b)
       """
@@ -53,8 +54,10 @@ When you run this test the library will automatically expand the macros in the s
 and write the expansion into the test file:
 
 ```swift
-func testStringify() {
-  assertMacro(["stringify": StringifyMacro.self]) {
+@Suite(.macros([StringifyMacro.self]))
+struct StringifyTests {
+  @Test func stringify() {
+    assertMacro {
     """
     #stringify(a + b)
     """
@@ -71,73 +74,22 @@ That is all it takes.
 If in the future the macro's output changes, such as adding labels to the tuple's arguments, then
 running the test again will produce a nicely formatted message:
 
-> ❌ failed - Actual output (+) differed from expected output (−). Difference: …
-> 
-> ```diff
-> - (a + b, "a + b")
-> + (result: a + b, code: "a + b")
-> ```
+```diff
+❌ Actual output (+) differed from expected output (−). Difference: …
+
+- (a + b, "a + b")
++ (result: a + b, code: "a + b")
+```
 
 You can even have the library automatically re-record the macro expansion directly into your test
-file by providing the `record` argument to `assertMacro`:
+file by providing the `record` argument to ``Testing/Trait/macros(_:indentationWidth:record:)``:
 
 ```swift
-assertMacro(["stringify": StringifyMacro.self], record: true) {
-  """
-  #stringify(a + b)
-  """
-} expansion: {
-  """
-  (a + b, "a + b")
-  """
-}
+@Suite(.macros([StringifyMacro.self], record: .all))
 ```
 
 Now when you run the test again the freshest expanded macro will be written to the `expansion` 
 trailing closure.
-
-If you're writing many tests for a macro, you can avoid the repetitive work of specifying the macros
-in each assertion by using XCTest's `invokeTest` method to wrap each test with Macro Testing
-configuration:
-
-```swift
-class StringifyMacroTests: XCTestCase {
-  override func invokeTest() {
-    withMacroTesting(
-      macros: ["stringify": StringifyMacro.self]
-    ) {
-      super.invokeTest()
-    }
-  }
-
-  func testStringify() {
-    assertMacro {  // 👈 No need to specify the macros being tested
-      """
-      #stringify(a + b)
-      """
-    } expansion: {
-      """
-      (a + b, "a + b")
-      """
-    }
-  }
-
-  // ...
-}
-```
-
-You can pass the `isRecording` parameter to `withMacroTesting` to re-record every assertion in the
-test case (or suite, if you're using your own custom base test case class):
-
-```swift
-override func invokeTest() {
-  withMacroTesting(
-    isRecording: true
-  ) {
-    super.invokeTest()
-  }
-}
-```
 
 Macro Testing can also test diagnostics, such as warnings, errors, notes, and fix-its. When a macro
 expansion emits a diagnostic, it will render inline in the test. For example, a macro that adds
@@ -186,6 +138,41 @@ func testNonAsyncFunctionDiagnostic() {
   }
 }
 ```
+
+## Integration with Swift Testing
+
+If you are using Swift's built-in Testing framework, this library also supports it. Instead of relying solely
+on XCTest, you can configure your tests using the `Trait` system provided by `swift-testing`. For example:
+
+```swift
+import Testing
+import MacroTesting
+
+@Suite(
+  .macros(
+    record: .missing // Record only missing snapshots
+    macros: ["stringify": StringifyMacro.self],
+  )
+)
+struct StringifyMacroSwiftTestingTests {
+  @Test
+  func testStringify() {
+    assertMacro {
+      """
+      #stringify(a + b)
+      """
+    } expansion: {
+      """
+      (a + b, "a + b")
+      """
+    }
+  }
+}
+```
+
+Additionally, the `record` parameter in `macros` can be used to control the recording behavior for all
+tests in the suite. This value can also be configured using the `SNAPSHOT_TESTING_RECORD` environment
+variable to dynamically adjust recording behavior based on your CI or local environment.
 
 ## Documentation
 

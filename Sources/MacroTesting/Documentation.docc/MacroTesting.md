@@ -13,11 +13,12 @@ do is write the following:
 
 ```swift
 import MacroTesting
-import XCTest
+import Testing
 
-class StringifyTests: XCTestCase {
-  func testStringify() {
-    assertMacro(["stringify": StringifyMacro.self]) {
+@Suite(.macros([StringifyMacro.self]))
+struct StringifyTests {
+  @Test func stringify() {
+    assertMacro {
       """
       #stringify(a + b)
       """
@@ -30,8 +31,10 @@ When you run this test the library will automatically expand the macros in the s
 and write the expansion into the test file:
 
 ```swift
-func testStringify() {
-  assertMacro(["stringify": StringifyMacro.self]) {
+@Suite(.macros([StringifyMacro.self]))
+struct StringifyTests {
+  @Test func stringify() {
+    assertMacro {
     """
     #stringify(a + b)
     """
@@ -56,66 +59,14 @@ running the test again will produce a nicely formatted message:
 ```
 
 You can even have the library automatically re-record the macro expansion directly into your test
-file by providing the `record` argument to
-``assertMacro(_:record:of:diagnostics:fixes:expansion:file:function:line:column:)-6hxgm``
+file by providing the `record` argument to ``Testing/Trait/macros(_:indentationWidth:record:)``:
+
 ```swift
-assertMacro(["stringify": StringifyMacro.self], record: true) {
-  """
-  #stringify(a + b)
-  """
-} expansion: {
-  """
-  (a + b, "a + b")
-  """
-}
+@Suite(.macros([StringifyMacro.self], record: .all))
 ```
 
 Now when you run the test again the freshest expanded macro will be written to the `expansion` 
 trailing closure.
-
-If you're writing many tests for a macro, you can avoid the repetitive work of specifying the macros
-in each assertion by using XCTest's `invokeTest` method to wrap each test with Macro Testing
-configuration:
-
-```swift
-class StringifyMacroTests: XCTestCase {
-  override func invokeTest() {
-    withMacroTesting(
-      macros: ["stringify": StringifyMacro.self]
-    ) {
-      super.invokeTest()
-    }
-  }
-
-  func testStringify() {
-    assertMacro {  // 👈 No need to specify the macros being tested
-      """
-      #stringify(a + b)
-      """
-    } expansion: {
-      """
-      (a + b, "a + b")
-      """
-    }
-  }
-
-  // ...
-}
-```
-
-You can pass the `isRecording` parameter to
-``withMacroTesting(isRecording:macros:operation:)-2vypn`` to re-record every assertion in the test
-case (or suite, if you're using your own custom base test case class):
-
-```swift
-override func invokeTest() {
-  withMacroTesting(
-    isRecording: true
-  ) {
-    super.invokeTest()
-  }
-}
-```
 
 Macro Testing can also test diagnostics, such as warnings, errors, notes, and fix-its. When a macro
 expansion emits a diagnostic, it will render inline in the test. For example, a macro that adds
@@ -169,5 +120,5 @@ func testNonAsyncFunctionDiagnostic() {
 
 ### Essentials
 
-- ``assertMacro(_:record:of:diagnostics:fixes:expansion:file:function:line:column:)-6hxgm``
-- ``withMacroTesting(isRecording:macros:operation:)-2vypn``
+- ``assertMacro(_:indentationWidth:record:of:diagnostics:fixes:expansion:fileID:file:function:line:column:)-8zqk4``
+- ``withMacroTesting(indentationWidth:record:macros:operation:)-7cm1s``
