@@ -198,8 +198,8 @@ import MacroTesting
 
 @Suite(
   .macros(
-    record: .missing, // Record only missing snapshots
-    macros: ["stringify": StringifyMacro.self]
+    ["stringify": StringifyMacro.self],
+    record: .missing // Record only missing snapshots
   )
 )
 struct StringifyMacroSwiftTestingTests {
