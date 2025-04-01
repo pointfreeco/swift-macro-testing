@@ -133,6 +133,8 @@ public func assertMacro(
   var indentationWidth =
     indentationWidth
     ?? MacroTestingConfiguration.current.indentationWidth
+  let additionalOperatorsSource =
+    MacroTestingConfiguration.current.operators
   var macros =
     macros
     ?? MacroTestingConfiguration.current.macros
@@ -178,7 +180,13 @@ public func assertMacro(
     }
     do {
       var origSourceFile = Parser.parse(source: try originalSource())
-      if let foldedSourceFile = try OperatorTable.standardOperators.foldAll(origSourceFile).as(
+      var operators = OperatorTable.standardOperators
+      if let additionalOperatorsSource {
+        try operators.addSourceFile(Parser.parse(source: additionalOperatorsSource))
+      } else {
+        try operators.addSourceFile(origSourceFile)
+      }
+      if let foldedSourceFile = try operators.foldAll(origSourceFile).as(
         SourceFileSyntax.self
       ) {
         origSourceFile = foldedSourceFile
@@ -312,7 +320,7 @@ public func assertMacro(
           )
           .description
         )
-        if let foldedSourceFile = try OperatorTable.standardOperators.foldAll(fixedSourceFile).as(
+        if let foldedSourceFile = try operators.foldAll(fixedSourceFile).as(
           SourceFileSyntax.self
         ) {
           fixedSourceFile = foldedSourceFile
@@ -579,18 +587,22 @@ public func assertMacro(
 ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
 ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
 ///     original source lacks indentation, it defaults to `.spaces(4)`.
+///   - operators: Any additional user-defined operators that need be known during macro expansion, declared as
+///     source code.
 ///   - record: The recording strategy to use for the macro expansion. If not provided, it defaults to the current
 ///     configuration, which can be set using the `SNAPSHOT_TESTING_RECORD` environment variable.
 ///   - macros: Specifies the macros to be expanded in the input Swift source string.
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
+  operators: (() -> String)? = nil,
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [String: Macro.Type]? = nil,
   operation: () async throws -> R
 ) async rethrows -> R {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
+  if let operators { configuration.operators = operators() }
   if let macros { configuration.macros = macros }
   return try await withSnapshotTesting(record: record) {
     try await MacroTestingConfiguration.$current.withValue(configuration) {
@@ -608,18 +620,22 @@ public func withMacroTesting<R>(
 ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
 ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
 ///     original source lacks indentation, it defaults to `.spaces(4)`.
+///   - operators: Any additional user-defined operators that need be known during macro expansion, declared as
+///     source code.
 ///   - record: The recording strategy to use for the macro expansion. If not provided, it defaults to the current
 ///     configuration, which can be set using the `SNAPSHOT_TESTING_RECORD` environment variable.
 ///   - macros: Specifies the macros to be expanded in the input Swift source string.
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
+  operators: (() -> String)? = nil,
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [String: Macro.Type]? = nil,
   operation: () throws -> R
 ) rethrows -> R {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
+  if let operators { configuration.operators = operators() }
   if let macros { configuration.macros = macros }
   return try withSnapshotTesting(record: record) {
     try MacroTestingConfiguration.$current.withValue(configuration) {
@@ -637,18 +653,22 @@ public func withMacroTesting<R>(
 ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
 ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
 ///     original source lacks indentation, it defaults to `.spaces(4)`.
+///   - operators: Any additional user-defined operators that need be known during macro expansion, declared as
+///     source code.
 ///   - record: The recording strategy to use for the macro expansion. If not provided, it defaults to the current
 ///     configuration, which can be set using the `SNAPSHOT_TESTING_RECORD` environment variable.
 ///   - macros: Specifies the macros to be expanded in the input Swift source string.
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
+  operators: (() -> String)? = nil,
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [Macro.Type],
   operation: () async throws -> R
 ) async rethrows -> R {
   try await withMacroTesting(
     indentationWidth: indentationWidth,
+    operators: operators,
     record: record,
     macros: Dictionary(macros: macros),
     operation: operation
@@ -664,18 +684,22 @@ public func withMacroTesting<R>(
 ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
 ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
 ///     original source lacks indentation, it defaults to `.spaces(4)`.
+///   - operators: Any additional user-defined operators that need be known during macro expansion, declared as
+///     source code.
 ///   - record: The recording strategy to use for the macro expansion. If not provided, it defaults to the current
 ///     configuration, which can be set using the `SNAPSHOT_TESTING_RECORD` environment variable
 ///   - macros: Specifies the macros to be expanded in the input Swift source string.
 ///   - operation: The operation to run with the configuration updated.
 public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
+  operators: (() -> String)? = nil,
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [Macro.Type],
   operation: () throws -> R
 ) rethrows -> R {
   try withMacroTesting(
     indentationWidth: indentationWidth,
+    operators: operators,
     record: record,
     macros: Dictionary(macros: macros),
     operation: operation
@@ -754,6 +778,7 @@ struct MacroTestingConfiguration {
   @TaskLocal static var current = Self()
 
   var indentationWidth: Trivia? = nil
+  var operators: String? = nil
   var macros: [String: Macro.Type]?
 }
 
