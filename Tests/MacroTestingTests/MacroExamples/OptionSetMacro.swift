@@ -93,7 +93,9 @@ public struct OptionSetMacro {
       else {
         context.diagnose(
           OptionSetMacroDiagnostic.requiresStringLiteral(optionsEnumNameArgumentLabel).diagnose(
-            at: optionEnumNameArg.expression))
+            at: optionEnumNameArg.expression
+          )
+        )
         return nil
       }
 
@@ -121,7 +123,8 @@ public struct OptionSetMacro {
       }).first
     else {
       context.diagnose(
-        OptionSetMacroDiagnostic.requiresOptionsEnum(optionsEnumName).diagnose(at: decl))
+        OptionSetMacroDiagnostic.requiresOptionsEnum(optionsEnumName).diagnose(at: decl)
+      )
       return nil
     }
 
@@ -135,7 +138,25 @@ public struct OptionSetMacro {
       return nil
     }
 
-    return (structDecl, optionsEnum, rawType)
+    let rawTypeSyntax: TypeSyntax?
+    #if canImport(SwiftSyntax601)
+      switch rawType {
+      case .type(let typeSyntax):
+        rawTypeSyntax = typeSyntax
+      default:
+        rawTypeSyntax = nil
+      }
+    #else
+      rawTypeSyntax = rawType
+    #endif
+
+    guard let rawTypeSyntax
+    else {
+      context.diagnose(OptionSetMacroDiagnostic.requiresOptionsEnumRawType.diagnose(at: attribute))
+      return nil
+    }
+
+    return (structDecl, optionsEnum, rawTypeSyntax)
   }
 }
 
