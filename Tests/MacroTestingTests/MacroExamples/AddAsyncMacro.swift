@@ -77,7 +77,8 @@ public struct AddAsyncMacro: PeerMacro {
       guard isResultReturn
       else { return returnType }
 
-      let successType = returnType!.as(IdentifierTypeSyntax.self)!.genericArgumentClause?.arguments.first!
+      let successType = returnType!.as(IdentifierTypeSyntax.self)!.genericArgumentClause?.arguments
+        .first!
         .argument
       #if canImport(SwiftSyntax601)
         switch successType {
