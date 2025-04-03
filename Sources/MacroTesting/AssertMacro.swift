@@ -472,7 +472,7 @@ extension FixIt.Change {
       )
 
     #if canImport(SwiftSyntax601)
-      case .replaceChild(let data):
+      case .replaceChild(let replacingChildData):
         let range = replacingChildData.replacementRange
         let start = expansionContext.position(
           of: range.lowerBound,
