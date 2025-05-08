@@ -31,12 +31,17 @@ public struct MetaEnumMacro {
     }
     
     let enumCaseDecls = enumDecl.memberBlock.members.compactMap {
-      $0.decl.as(EnumCaseDeclSyntax.self)?.elements.first
-    }
-    guard Set(enumCaseDecls.map(\.name.text)).count == enumCaseDecls.count else {
-      throw DiagnosticsError(diagnostics: [
-        CaseMacroDiagnostic.overloadedCase.diagnose(at: Syntax(node))
-      ])
+      $0.decl.as(EnumCaseDeclSyntax.self)
+    }.flatMap(\.elements)
+    
+    var seenCaseNames: Set<String> = []
+    for name in enumCaseDecls.map(\.name) {
+      defer { seenCaseNames.insert(name.text) }
+      guard !seenCaseNames.contains(name.text) else {
+        throw DiagnosticsError(diagnostics: [
+          CaseMacroDiagnostic.overloadedCase.diagnose(at: Syntax(name))
+        ])
+      }
     }
 
     parentTypeName = enumDecl.name.with(\.trailingTrivia, [])
