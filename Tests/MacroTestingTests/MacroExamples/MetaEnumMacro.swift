@@ -29,6 +29,15 @@ public struct MetaEnumMacro {
         CaseMacroDiagnostic.notAnEnum(declaration).diagnose(at: Syntax(node))
       ])
     }
+    
+    let enumCaseDecls = enumDecl.memberBlock.members.compactMap {
+      $0.decl.as(EnumCaseDeclSyntax.self)?.elements.first
+    }
+    guard Set(enumCaseDecls.map(\.name.text)).count == enumCaseDecls.count else {
+      throw DiagnosticsError(diagnostics: [
+        CaseMacroDiagnostic.overloadedCase.diagnose(at: Syntax(node))
+      ])
+    }
 
     parentTypeName = enumDecl.name.with(\.trailingTrivia, [])
 
@@ -105,29 +114,33 @@ extension EnumDeclSyntax {
 }
 
 enum CaseMacroDiagnostic {
+  case overloadedCase
   case notAnEnum(DeclGroupSyntax)
 }
 
 extension CaseMacroDiagnostic: DiagnosticMessage {
   var message: String {
     switch self {
+    case .overloadedCase:
+      "'@MetaEnum' cannot be applied to enums with overloaded case names."
     case .notAnEnum(let decl):
-      return
-        "'@MetaEnum' can only be attached to an enum, not \(decl.descriptiveDeclKind(withArticle: true))"
+      "'@MetaEnum' can only be attached to an enum, not \(decl.descriptiveDeclKind(withArticle: true))"
     }
   }
 
   var diagnosticID: MessageID {
     switch self {
+    case .overloadedCase:
+      MessageID(domain: "MetaEnumDiagnostic", id: "overloadedCase")
     case .notAnEnum:
-      return MessageID(domain: "MetaEnumDiagnostic", id: "notAnEnum")
+      MessageID(domain: "MetaEnumDiagnostic", id: "notAnEnum")
     }
   }
 
   var severity: DiagnosticSeverity {
     switch self {
-    case .notAnEnum:
-      return .error
+    case .overloadedCase: .error
+    case .notAnEnum: .error
     }
   }
 

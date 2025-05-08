@@ -106,4 +106,24 @@ final class MetaEnumMacroTests: BaseTestCase {
       """
     }
   }
+  
+  func testDuplicateCaseName() {
+    assertMacro {
+    """
+    @MetaEnum enum Foo {
+      case bar(int: Int)
+      case bar(string: String)
+    }
+    """
+    } diagnostics: {
+      """
+      @MetaEnum enum Foo {
+      ┬────────
+      ╰─ 🛑 '@MetaEnum' cannot be applied to enums with overloaded case names.
+        case bar(int: Int)
+        case bar(string: String)
+      }
+      """
+    } 
+  }
 }
