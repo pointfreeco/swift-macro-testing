@@ -26,16 +26,12 @@ public struct MetaEnumMacro {
   ) throws {
     guard let enumDecl = declaration.as(EnumDeclSyntax.self) else {
       throw DiagnosticsError(diagnostics: [
-        CaseMacroDiagnostic.notAnEnum(declaration).diagnose(at: Syntax(node))
+        CaseMacroDiagnostic.notAnEnum(declaration).diagnose(at: Syntax(declaration.introducer))
       ])
     }
     
-    let enumCaseDecls = enumDecl.memberBlock.members.compactMap {
-      $0.decl.as(EnumCaseDeclSyntax.self)
-    }.flatMap(\.elements)
-    
     var seenCaseNames: Set<String> = []
-    for name in enumCaseDecls.map(\.name) {
+    for name in enumDecl.caseElements.map(\.name) {
       defer { seenCaseNames.insert(name.text) }
       guard !seenCaseNames.contains(name.text) else {
         throw DiagnosticsError(diagnostics: [
@@ -156,21 +152,8 @@ extension CaseMacroDiagnostic: DiagnosticMessage {
 
 extension DeclGroupSyntax {
   func descriptiveDeclKind(withArticle article: Bool = false) -> String {
-    switch self {
-    case is ActorDeclSyntax:
-      return article ? "an actor" : "actor"
-    case is ClassDeclSyntax:
-      return article ? "a class" : "class"
-    case is ExtensionDeclSyntax:
-      return article ? "an extension" : "extension"
-    case is ProtocolDeclSyntax:
-      return article ? "a protocol" : "protocol"
-    case is StructDeclSyntax:
-      return article ? "a struct" : "struct"
-    case is EnumDeclSyntax:
-      return article ? "an enum" : "enum"
-    default:
-      fatalError("Unknown DeclGroupSyntax")
-    }
+    let introducerText = introducer.text
+    let prefix = article ? ["a", "e", "i", "o", "u"].contains(introducerText.first!) ? "an " : "a " : ""
+    return prefix + introducerText
   }
 }

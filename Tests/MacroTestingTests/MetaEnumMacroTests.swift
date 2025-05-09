@@ -97,8 +97,8 @@ final class MetaEnumMacroTests: BaseTestCase {
     } diagnostics: {
       """
       @MetaEnum struct Cell {
-      ┬────────
-      ╰─ 🛑 '@MetaEnum' can only be attached to an enum, not a struct
+                ┬─────
+                ╰─ 🛑 '@MetaEnum' can only be attached to an enum, not a struct
         let integer: Int
         let text: String
         let boolean: Bool
