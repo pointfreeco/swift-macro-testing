@@ -73,7 +73,7 @@ jobs:
     strategy:
       matrix:
         swift:
-          - "6.0.2"
+          - "6.0.3"
     name: Android
     runs-on: ubuntu-latest
     steps:
