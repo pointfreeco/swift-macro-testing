@@ -97,11 +97,49 @@ final class MetaEnumMacroTests: BaseTestCase {
     } diagnostics: {
       """
       @MetaEnum struct Cell {
-      ┬────────
-      ╰─ 🛑 '@MetaEnum' can only be attached to an enum, not a struct
+                ┬─────
+                ╰─ 🛑 '@MetaEnum' can only be attached to an enum, not a struct
         let integer: Int
         let text: String
         let boolean: Bool
+      }
+      """
+    }
+  }
+
+  func testDuplicateCaseName() {
+    assertMacro {
+    """
+    @MetaEnum enum Foo {
+      case bar(int: Int)
+      case bar(string: String)
+    }
+    """
+    } diagnostics: {
+      """
+      @MetaEnum enum Foo {
+        case bar(int: Int)
+        case bar(string: String)
+             ┬──
+             ╰─ 🛑 '@MetaEnum' cannot be applied to enums with overloaded case names.
+      }
+      """
+    }
+  }
+  
+  func testOverloadedCaseName_SingleLine() {
+    assertMacro {
+    """
+    @MetaEnum enum Foo {
+      case bar(int: Int), bar(string: String)
+    }
+    """
+    } diagnostics: {
+      """
+      @MetaEnum enum Foo {
+        case bar(int: Int), bar(string: String)
+                            ┬──
+                            ╰─ 🛑 '@MetaEnum' cannot be applied to enums with overloaded case names.
       }
       """
     }
