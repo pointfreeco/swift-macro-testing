@@ -769,7 +769,7 @@ internal func macroName(className: String, isExpression: Bool) -> String {
   return name
 }
 
-struct MacroTestingConfiguration {
+struct MacroTestingConfiguration: Sendable {
   @TaskLocal static var current = Self()
 
   var indentationWidth: Trivia? = nil
