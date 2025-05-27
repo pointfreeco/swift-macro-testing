@@ -486,6 +486,8 @@ extension FixIt.Change {
           range: start..<end,
           replacement: replacingChildData.newChild.description
         )
+      @unknown default:
+        fatalError()
     #endif
     }
   }
