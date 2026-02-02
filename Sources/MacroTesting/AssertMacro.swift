@@ -781,7 +781,7 @@ extension Dictionary where Key == String, Value == Macro.Type {
     self.init(
       macros.map {
         let name = macroName(
-          className: String(describing: $0),
+          className: _typeName($0, qualified: false),
           isExpression: $0 is ExpressionMacro.Type
         )
         return (key: name, value: $0)
