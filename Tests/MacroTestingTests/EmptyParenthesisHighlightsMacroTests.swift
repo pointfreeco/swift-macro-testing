@@ -17,6 +17,7 @@ final class EmptyParenthesisHighlightsMacroTests: BaseTestCase {
     } diagnostics: {
       """
       @EmptyParenthesisHighlights()
+                                 ─┬
                                   ╰─ 🛑 It either takes no parameters or all parameters have default values, so the parenthesis can be omitted
       struct Whatever {}
       """
