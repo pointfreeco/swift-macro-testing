@@ -130,6 +130,91 @@ public func assertMacro(
   line: UInt = #line,
   column: UInt = #column
 ) {
+  _assertMacro(
+    macros?.macroLookup,
+    indentationWidth: indentationWidth,
+    record: record,
+    of: originalSource,
+    diagnostics: diagnosedSource,
+    fixes: fixedSource,
+    expansion: expandedSource,
+    fileID: fileID,
+    file: filePath,
+    function: function,
+    line: line,
+    column: column
+  )
+}
+
+#if canImport(SwiftSyntax600)
+  /// Asserts that a given Swift source string matches an expected string with all macros expanded.
+  ///
+  /// - Parameters:
+  ///   - macros: The specifications of macros to expand in the original source string.
+  ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
+  ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
+  ///     original source lacks indentation, it defaults to `.spaces(4)`.
+  ///   - record: The recording strategy to use for the macro expansion. If not provided, it
+  ///     defaults to the current configuration, which can be set using the
+  ///     `SNAPSHOT_TESTING_RECORD` environment variable
+  ///   - originalSource: A string of Swift source code.
+  ///   - diagnosedSource: Swift source code annotated with expected diagnostics.
+  ///   - fixedSource: Swift source code with expected fix-its applied.
+  ///   - expandedSource: Expected Swift source string with macros expanded.
+  ///   - fileID: The file ID where the assertion occurs.
+  ///   - filePath: The file where the assertion occurs. The default is the filename of the test
+  ///     case where you call this function.
+  ///   - function: The function where the assertion occurs. The default is the name of the test
+  ///     method where you call this function.
+  ///   - line: The line where the assertion occurs. The default is the line number where you call
+  ///     this function.
+  ///   - column: The column where the assertion occurs. The default is the column where you call
+  ///     this function.
+  public func assertMacro(
+    _ macros: [String: MacroSpec],
+    indentationWidth: Trivia? = nil,
+    record: SnapshotTestingConfiguration.Record? = nil,
+    of originalSource: () throws -> String,
+    diagnostics diagnosedSource: (() -> String)? = nil,
+    fixes fixedSource: (() -> String)? = nil,
+    expansion expandedSource: (() -> String)? = nil,
+    fileID: StaticString = #fileID,
+    file filePath: StaticString = #filePath,
+    function: StaticString = #function,
+    line: UInt = #line,
+    column: UInt = #column
+  ) {
+    _assertMacro(
+      macros,
+      indentationWidth: indentationWidth,
+      record: record,
+      of: originalSource,
+      diagnostics: diagnosedSource,
+      fixes: fixedSource,
+      expansion: expandedSource,
+      fileID: fileID,
+      file: filePath,
+      function: function,
+      line: line,
+      column: column
+    )
+  }
+#endif
+
+private func _assertMacro(
+  _ macros: MacroLookup?,
+  indentationWidth: Trivia?,
+  record: SnapshotTestingConfiguration.Record?,
+  of originalSource: () throws -> String,
+  diagnostics diagnosedSource: (() -> String)?,
+  fixes fixedSource: (() -> String)?,
+  expansion expandedSource: (() -> String)?,
+  fileID: StaticString,
+  file filePath: StaticString,
+  function: StaticString,
+  line: UInt,
+  column: UInt
+) {
   var indentationWidth =
     indentationWidth
     ?? MacroTestingConfiguration.current.indentationWidth
@@ -150,7 +235,7 @@ public func assertMacro(
       record
       ?? Test.current?.record
   #endif
-  withMacroTesting(indentationWidth: indentationWidth, record: record, macros: macros) {
+  _withMacroTesting(indentationWidth: indentationWidth, record: record, macros: macros) {
     guard let macros, !macros.isEmpty else {
       recordIssue(
         """
@@ -204,7 +289,7 @@ public func assertMacro(
       )
       #if canImport(SwiftSyntax600)
         var expandedSourceFile = origSourceFile.expand(
-          macros: macros,
+          macroSpecs: macros,
           contextGenerator: { syntax in
             BasicMacroExpansionContext(
               sharingWith: context,
@@ -344,7 +429,7 @@ public func assertMacro(
         )
         #if canImport(SwiftSyntax600)
           expandedSourceFile = fixedSourceFile.expand(
-            macros: macros,
+            macroSpecs: macros,
             contextGenerator: { _ in context },
             indentationWidth: indentationWidth
           )
@@ -608,6 +693,53 @@ public func withMacroTesting<R>(
   macros: [String: Macro.Type]? = nil,
   operation: () async throws -> R
 ) async rethrows -> R {
+  try await _withMacroTesting(
+    indentationWidth: indentationWidth,
+    record: record,
+    macros: macros?.macroLookup,
+    operation: operation
+  )
+}
+
+#if canImport(SwiftSyntax600)
+  /// Customizes `assertMacro` for the duration of an operation.
+  ///
+  /// This overload takes macro specifications (`SwiftSyntaxMacroExpansion.MacroSpec`) instead of
+  /// macro types, which allows you to specify the list of protocols the compiler would ask an
+  /// extension macro to add conformances to. See
+  /// ``assertMacro(_:indentationWidth:record:of:diagnostics:fixes:expansion:fileID:file:function:line:column:)-b7cq``
+  /// for more details.
+  ///
+  /// - Parameters:
+  ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
+  ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
+  ///     original source lacks indentation, it defaults to `.spaces(4)`.
+  ///   - record: The recording strategy to use for the macro expansion. If not provided, it
+  ///     defaults to the current configuration, which can be set using the
+  ///     `SNAPSHOT_TESTING_RECORD` environment variable.
+  ///   - macros: Specifications of the macros to be expanded in the input Swift source string.
+  ///   - operation: The operation to run with the configuration updated.
+  public func withMacroTesting<R>(
+    indentationWidth: Trivia? = nil,
+    record: SnapshotTestingConfiguration.Record? = nil,
+    macros: [String: MacroSpec],
+    operation: () async throws -> R
+  ) async rethrows -> R {
+    try await _withMacroTesting(
+      indentationWidth: indentationWidth,
+      record: record,
+      macros: macros,
+      operation: operation
+    )
+  }
+#endif
+
+private func _withMacroTesting<R>(
+  indentationWidth: Trivia?,
+  record: SnapshotTestingConfiguration.Record?,
+  macros: MacroLookup?,
+  operation: () async throws -> R
+) async rethrows -> R {
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
   if let macros { configuration.macros = macros }
@@ -635,6 +767,53 @@ public func withMacroTesting<R>(
   indentationWidth: Trivia? = nil,
   record: SnapshotTestingConfiguration.Record? = nil,
   macros: [String: Macro.Type]? = nil,
+  operation: () throws -> R
+) rethrows -> R {
+  try _withMacroTesting(
+    indentationWidth: indentationWidth,
+    record: record,
+    macros: macros?.macroLookup,
+    operation: operation
+  )
+}
+
+#if canImport(SwiftSyntax600)
+  /// Customizes `assertMacro` for the duration of an operation.
+  ///
+  /// This overload takes macro specifications (`SwiftSyntaxMacroExpansion.MacroSpec`) instead of
+  /// macro types, which allows you to specify the list of protocols the compiler would ask an
+  /// extension macro to add conformances to. See
+  /// ``assertMacro(_:indentationWidth:record:of:diagnostics:fixes:expansion:fileID:file:function:line:column:)-b7cq``
+  /// for more details.
+  ///
+  /// - Parameters:
+  ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
+  ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
+  ///     original source lacks indentation, it defaults to `.spaces(4)`.
+  ///   - record: The recording strategy to use for the macro expansion. If not provided, it
+  ///     defaults to the current configuration, which can be set using the
+  ///     `SNAPSHOT_TESTING_RECORD` environment variable.
+  ///   - macros: Specifications of the macros to be expanded in the input Swift source string.
+  ///   - operation: The operation to run with the configuration updated.
+  public func withMacroTesting<R>(
+    indentationWidth: Trivia? = nil,
+    record: SnapshotTestingConfiguration.Record? = nil,
+    macros: [String: MacroSpec],
+    operation: () throws -> R
+  ) rethrows -> R {
+    try _withMacroTesting(
+      indentationWidth: indentationWidth,
+      record: record,
+      macros: macros,
+      operation: operation
+    )
+  }
+#endif
+
+private func _withMacroTesting<R>(
+  indentationWidth: Trivia?,
+  record: SnapshotTestingConfiguration.Record?,
+  macros: MacroLookup?,
   operation: () throws -> R
 ) rethrows -> R {
   var configuration = MacroTestingConfiguration.current
@@ -773,7 +952,7 @@ struct MacroTestingConfiguration {
   @TaskLocal static var current = Self()
 
   var indentationWidth: Trivia? = nil
-  var macros: [String: Macro.Type]?
+  var macros: MacroLookup?
 }
 
 extension Dictionary where Key == String, Value == Macro.Type {

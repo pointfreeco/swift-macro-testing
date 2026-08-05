@@ -67,7 +67,7 @@ public func withMacroTesting<R>(
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
   let record: SnapshotTestingConfiguration.Record? = isRecording.map { $0 ? .all : .missing }
-  if let macros { configuration.macros = macros }
+  if let macros { configuration.macros = macros.macroLookup }
   _ = try await withSnapshotTesting(record: record) {
     try await MacroTestingConfiguration.$current.withValue(configuration) {
       try await operation()
@@ -102,7 +102,7 @@ public func withMacroTesting<R>(
   var configuration = MacroTestingConfiguration.current
   if let indentationWidth { configuration.indentationWidth = indentationWidth }
   let record: SnapshotTestingConfiguration.Record? = isRecording.map { $0 ? .all : .missing }
-  if let macros { configuration.macros = macros }
+  if let macros { configuration.macros = macros.macroLookup }
   _ = try withSnapshotTesting(record: record) {
     try MacroTestingConfiguration.$current.withValue(configuration) {
       try operation()

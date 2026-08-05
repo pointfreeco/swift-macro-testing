@@ -1,6 +1,7 @@
 #if canImport(Testing) && compiler(>=6)
   import SnapshotTesting
   import SwiftSyntax
+  import SwiftSyntaxMacroExpansion
   import SwiftSyntaxMacros
   import Testing
 
@@ -31,11 +32,41 @@
       _MacrosTestTrait(
         configuration: MacroTestingConfiguration(
           indentationWidth: indentationWidth,
-          macros: macros
+          macros: macros?.macroLookup
         ),
         record: record
       )
     }
+
+    #if canImport(SwiftSyntax600)
+      /// Configure snapshot testing in a suite or test.
+      ///
+      /// This overload takes macro specifications (`SwiftSyntaxMacroExpansion.MacroSpec`) instead
+      /// of macro types, which allows you to specify the list of protocols the compiler would ask
+      /// an extension macro to add conformances to.
+      ///
+      /// - Parameters:
+      ///   - macros: A dictionary mapping macro names to their specifications. This specifies
+      ///     which macros should be expanded during testing.
+      ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion (e.g., `.spaces(2)`).
+      ///     Defaults to the original source's indentation if unspecified.
+      ///   - record: The recording strategy to use for macro expansions. This can be set to `.all`, `.missing`,
+      ///     `.never`, or `.failed`. If not provided, it uses the current configuration, which can also be set via
+      ///     the `SNAPSHOT_TESTING_RECORD` environment variable.
+      public static func macros(
+        _ macros: [String: MacroSpec],
+        indentationWidth: Trivia? = nil,
+        record: SnapshotTestingConfiguration.Record? = nil
+      ) -> Self {
+        _MacrosTestTrait(
+          configuration: MacroTestingConfiguration(
+            indentationWidth: indentationWidth,
+            macros: macros
+          ),
+          record: record
+        )
+      }
+    #endif
 
     /// Configure snapshot testing in a suite or test.
     ///
@@ -54,7 +85,7 @@
       _MacrosTestTrait(
         configuration: MacroTestingConfiguration(
           indentationWidth: indentationWidth,
-          macros: macros.map { Dictionary(macros: $0) }
+          macros: macros.map { Dictionary(macros: $0).macroLookup }
         ),
         record: record
       )
@@ -89,7 +120,7 @@
         return nil
       }
 
-      var macros: [String: Macro.Type]? {
+      var macros: MacroLookup? {
         for trait in traits.reversed() {
           if let macros = (trait as? _MacrosTestTrait)?.configuration.macros {
             return macros
