@@ -704,12 +704,6 @@ public func withMacroTesting<R>(
 #if canImport(SwiftSyntax600)
   /// Customizes `assertMacro` for the duration of an operation.
   ///
-  /// This overload takes macro specifications (`SwiftSyntaxMacroExpansion.MacroSpec`) instead of
-  /// macro types, which allows you to specify the list of protocols the compiler would ask an
-  /// extension macro to add conformances to. See
-  /// ``assertMacro(_:indentationWidth:record:of:diagnostics:fixes:expansion:fileID:file:function:line:column:)-b7cq``
-  /// for more details.
-  ///
   /// - Parameters:
   ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
   ///     (e.g., `.spaces(2)`). Defaults to the original source's indentation if unspecified. If the
@@ -779,12 +773,6 @@ public func withMacroTesting<R>(
 
 #if canImport(SwiftSyntax600)
   /// Customizes `assertMacro` for the duration of an operation.
-  ///
-  /// This overload takes macro specifications (`SwiftSyntaxMacroExpansion.MacroSpec`) instead of
-  /// macro types, which allows you to specify the list of protocols the compiler would ask an
-  /// extension macro to add conformances to. See
-  /// ``assertMacro(_:indentationWidth:record:of:diagnostics:fixes:expansion:fileID:file:function:line:column:)-b7cq``
-  /// for more details.
   ///
   /// - Parameters:
   ///   - indentationWidth: The `Trivia` for setting indentation during macro expansion
