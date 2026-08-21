@@ -77,7 +77,7 @@
     ///   - macros: An array of macros. This specifies which macros should be expanded during
     ///     testing.
     public static func macros(
-      _ macros: [Macro.Type]? = nil,
+      _ macros: [Macro.Type]?,
       indentationWidth: Trivia? = nil,
       record: SnapshotTestingConfiguration.Record? = nil
     ) -> Self {
