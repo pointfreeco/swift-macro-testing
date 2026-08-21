@@ -19,11 +19,11 @@ extension Array where Element == Diagnostic {
         let endLocation = context.location(
           for: highlight.endPositionBeforeTrailingTrivia, anchoredAt: diag.node, fileName: ""
         )
-        let descr = diag.node.trimmedDescription
+        let description = diag.node.trimmedDescription
         guard
           startLocation.line == lineNumber,
           startLocation.line == endLocation.line,
-          descr.isEmpty || sourceString.contains(descr)
+          description.isEmpty || sourceString.contains(description)
         else { continue }
         partialResult.highlightColumns.formUnion(startLocation.column..<endLocation.column)
         partialResult.highlightLineLength = Swift.max(
